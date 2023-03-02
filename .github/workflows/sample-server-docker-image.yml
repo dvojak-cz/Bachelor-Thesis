@@ -3,6 +3,7 @@ name: Sample Servers | Build and push docker images
 on:
   push:
     branches: ["master", "code", "ci"]
+    paths: ['code/sampleServers']
   workflow_dispatch:
 jobs:
   clone:
