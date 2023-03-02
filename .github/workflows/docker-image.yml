@@ -1,0 +1,35 @@
+name: Sample Servers | Build and push docker images 
+
+on:
+  push:
+    branches: ["master", "code", "ci"]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: clone
+        uses: actions/checkout@v3
+        with:
+          path: code/sampleServers
+      
+      - name: ls
+        run: ls -la
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push tcp server
+        uses: docker/build-push-action@v4
+        with:
+          context: code/sampleServers/tcpServer
+          push: true
+          tags: trojaj12/tcp-server:latest
+      - name: Build and push udp server
+        uses: docker/build-push-action@v4
+        with:
+          context: code/sampleServers/udpServer
+          push: true
+          tags: trojaj12/udp-server:latest
