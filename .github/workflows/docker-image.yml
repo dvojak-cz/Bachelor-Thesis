@@ -5,17 +5,29 @@ on:
     branches: ["master", "code", "ci"]
   workflow_dispatch:
 jobs:
-  build:
+  clone:
     runs-on: ubuntu-latest
     steps:
       - name: clone
         uses: actions/checkout@v3
+      - name: Upload tcp code
+        uses: actions/upload-artifact@v2
         with:
-          path: code/sampleServers
-      
-      - name: ls
-        run: ls -la
-
+          name: tcp-server-code
+          path: code/sampleServers/tcpServer
+      - name: Upload udp code
+        uses: actions/upload-artifact@v2
+        with:
+          name: udp-server-code
+          path: code/sampleServers/udpServer
+  build_and_publish_tcp:
+    runs-on: ubuntu-latest
+    needs: clone
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: tcp-server-code
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
@@ -24,12 +36,25 @@ jobs:
       - name: Build and push tcp server
         uses: docker/build-push-action@v4
         with:
-          context: code/sampleServers/tcpServer
+          context: .
           push: true
           tags: trojaj12/tcp-server:latest
+  build_and_publish_udp:
+    runs-on: ubuntu-latest
+    needs: clone
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: udp-server-code
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build and push udp server
         uses: docker/build-push-action@v4
         with:
-          context: code/sampleServers/udpServer
+          context: .
           push: true
           tags: trojaj12/udp-server:latest
