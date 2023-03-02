@@ -1,0 +1,73 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nat-to-device
+spec:
+  selector:
+    matchLabels:
+      app: nat-to-device
+  template:
+    metadata:
+      labels:
+        app: nat-to-device
+      annotations:
+        k8s.v1.cni.cncf.io/networks: bridge-conf
+    spec:
+      nodeSelector:
+        edge: "true"
+      tolerations:
+        - operator: Exists
+          effect: NoSchedule
+        - operator: Exists
+          effect: NoExecute
+      containers:
+        - name: nat-tcp
+          image: alpine/socat
+          args: [ "-ddd", "-lh", "-lp", "name", "tcp4-listen:8080,fork", "tcp4-connect:172.17.16.120:8080" ]
+          ports:
+            - containerPort: 8080
+              name: nat-tcp
+              protocol: TCP
+        - name: nat-udp
+          image: alpine/socat
+          args: [ "-ddd","-T" ,"5" ,  "-lh", "-lp", "name", "udp-listen:9090,fork", "udp4-connect:172.17.16.120:9090" ]
+          ports:
+            - containerPort: 9090
+              name: nat-udp
+              protocol: UDP
+        - name: nat-http
+          image: alpine/socat
+          args: [ "-ddd", "-lh", "-lp", "name", "tcp4-listen:8000,fork", "tcp4-connect:172.17.16.120:8000" ]
+          ports:
+            - containerPort: 8000
+              name: nat-http
+              protocol: TCP
+        - name: debug
+          image: nicolaka/netshoot:latest
+          command: ["tail"]
+          args: ["/dev/random"]
+          imagePullPolicy: Always
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nat
+spec:
+  selector:
+    app: nat-to-device
+  type: ClusterIP
+  ports:
+    - name: nat-tcp
+      protocol: TCP
+      port: 8080
+      targetPort: nat-tcp
+    - name: nat-udp
+      protocol: UDP
+      port: 9090
+      targetPort: nat-udp
+    - name: nat-http
+      protocol: TCP
+      port: 8000
+      targetPort: nat-http
