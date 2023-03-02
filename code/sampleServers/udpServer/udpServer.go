@@ -36,7 +36,7 @@ func response(udpServer net.PacketConn, addr net.Addr, buffer []byte) {
 			"time: %s | client: %s | data: %s | \t",
 			time.Now().String(), clientAddr, clientData)
 	)
-	log.Printf("[%d]New connection receiver %s", connectionId, clientAddr)
+	log.Printf("[%d]New connection received %s", connectionId, clientAddr)
 	log.Printf("[%d]>>> %s", connectionId, clientData)
 
 	udpServer.WriteTo([]byte(response), addr)

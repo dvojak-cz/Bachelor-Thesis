@@ -44,7 +44,7 @@ func handleConnection(conn net.Conn, id uint) {
 	defer log.Printf("[%d] CLOSE", id)
 	defer conn.Write([]byte("CLOSE"))
 	clientData := fmt.Sprintf("%s://%s", conn.RemoteAddr().Network(), conn.RemoteAddr().String())
-	log.Printf("[%d]New connection receiver %s", connectionId, clientData)
+	log.Printf("[%d]New connection received %s", connectionId, clientData)
 	conn.Write([]byte(fmt.Sprintf("Connecting from: %s\t", clientData)))
 	var (
 		data string
@@ -61,15 +61,15 @@ func handleConnection(conn net.Conn, id uint) {
 		log.Printf("[%d]ERR: %s", id, err.Error())
 		return
 	}
-	log.Printf("[%d]NumberOfMessages: %d", id, iter)
-	conn.Write([]byte(fmt.Sprintf("waiting for: %d messages\t", iter)))
+	log.Printf("[%d]Number of messages: %d", id, iter)
+	conn.Write([]byte(fmt.Sprintf("Waiting for: %d messages\t", iter)))
 	for i := 0; i < iter; i++ {
 		data, err = getStringData(conn)
 		if err != nil {
 			log.Printf("[%d]ERR: %s", id, err.Error())
 			return
 		}
-		log.Printf("[%d]>> %s", id, data)
+		log.Printf("[%d]>>> %s", id, data)
 		response := fmt.Sprintf("%s\t", time.Now().String())
 		conn.Write([]byte(response))
 	}
