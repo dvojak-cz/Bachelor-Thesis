@@ -1,0 +1,122 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: http-server
+  namespace: default
+  labels:
+    app: http-server
+spec:
+  selector:
+    matchLabels:
+      app: http-server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: http-server
+    spec:
+      containers:
+        - name: http-server
+          image: nginx
+          ports:
+            - containerPort: 80
+              name: http
+      restartPolicy: Always
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: http-server
+spec:
+  selector:
+    app: http-server
+  type: ClusterIP
+  ports:
+    - name: http-nginx
+      port: 80
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tcp-server
+  namespace: default
+  labels:
+    app: tcp-server
+spec:
+  selector:
+    matchLabels:
+      app: tcp-server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: tcp-server
+    spec:
+      containers:
+        - name: tcp-server
+          image: trojaj12/tcp-server
+          args: ["0.0.0.0", "8080"]
+          ports:
+            - containerPort: 8080
+              name: tcp
+          imagePullPolicy: Always
+      restartPolicy: Always
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: tcp-server
+spec:
+  selector:
+    app: tcp-server
+  type: ClusterIP
+  ports:
+    - name: tcp-trojaj12
+      protocol: TCP
+      port: 8080
+      targetPort: tcp
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: udp-server
+  namespace: default
+  labels:
+    app: udp-server
+spec:
+  selector:
+    matchLabels:
+      app: udp-server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: udp-server
+    spec:
+      containers:
+        - name: udp-server
+          image: trojaj12/udp-server
+          args: ["0.0.0.0", "9090"]
+          ports:
+            - containerPort: 9090
+              name: udp
+              protocol: UDP
+          imagePullPolicy: Always
+      restartPolicy: Always
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: udp-server
+spec:
+  selector:
+    app: udp-server
+  type: ClusterIP
+  ports:
+    - name: udp-trojaj12
+      port: 9090
+      targetPort: udp
+      protocol: UDP

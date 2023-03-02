@@ -1,0 +1,53 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: debug
+  name: debug
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debug
+  template:
+    metadata:
+      labels:
+        app: debug
+    spec:
+      containers:
+        - name: debug
+          image: nicolaka/netshoot:latest
+          command: ["tail"]
+          args: ["/dev/random"]
+          imagePullPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: debug-edge
+  name: debug-edge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debug-edge
+  template:
+    metadata:
+      labels:
+        app: debug-edge
+    spec:
+      nodeSelector:
+        edge: "true"
+      tolerations:
+        - operator: Exists
+          effect: NoSchedule
+        - operator: Exists
+          effect: NoExecute
+      containers:
+        - name: debug-edge
+          image: nicolaka/netshoot:latest
+          command: ["tail"]
+          args: ["/dev/random"]
+          imagePullPolicy: Always
