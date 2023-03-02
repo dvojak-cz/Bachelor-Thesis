@@ -12,15 +12,19 @@ jobs:
       - name: clone
         uses: actions/checkout@v3
       - name: Upload tcp code
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: tcp-server-code
           path: code/sampleServers/tcpServer
+          if-no-files-found: error
+          retention-days: 1
       - name: Upload udp code
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: udp-server-code
           path: code/sampleServers/udpServer
+          if-no-files-found: error
+          retention-days: 1
   build_and_publish_tcp:
     runs-on: ubuntu-latest
     needs: clone
@@ -40,6 +44,11 @@ jobs:
           context: .
           push: true
           tags: trojaj12/tcp-server:latest
+      - name: delete artifact
+        if: always() 
+        uses: geekyeggo/delete-artifact@v2
+        with:
+          name: tcp-server-code
   build_and_publish_udp:
     runs-on: ubuntu-latest
     needs: clone
@@ -59,3 +68,8 @@ jobs:
           context: .
           push: true
           tags: trojaj12/udp-server:latest
+      - name: delete artifact
+        if: always() 
+        uses: geekyeggo/delete-artifact@v2
+        with:
+          name: udp-server-code
