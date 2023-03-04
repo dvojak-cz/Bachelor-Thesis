@@ -1,0 +1,80 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-nat
+  labels:
+    app: nginx-nat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-nat
+  template:
+    metadata:
+      labels:
+        app: nginx-nat
+    spec:
+      nodeSelector:
+        edge: "true"
+      tolerations:
+        - operator: Exists
+          effect: NoSchedule
+        - operator: Exists
+          effect: NoExecute
+      containers:
+        - name: nginx-nat
+          image: nginx:latest
+          ports:
+            - containerPort: 8080
+              name: silicon-hill
+              protocol: TCP
+          volumeMounts:
+            - name: sh-nginx
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+      volumes:
+        - name: sh-nginx
+          configMap:
+            name: sh-nginx
+#kubectl create configmap sh-nginx --from-file files/nginx.conf
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sh-nginx
+data:
+  nginx.conf: |-
+    user  nginx;
+    worker_processes  auto;
+
+    error_log  /var/log/nginx/error.log notice;
+    pid        /var/run/nginx.pid;
+
+    events {
+        worker_connections  1024;
+    }
+    stream {
+      upstream sh {
+        server  147.32.30.146:80;
+      }
+
+      server {
+        listen     8080;
+        proxy_pass sh;
+      }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-nat-sh
+spec:
+  selector:
+    app: nginx-nat
+  type: ClusterIP
+  ports:
+    - name: http-sh
+      protocol: TCP
+      port: 8080
+      targetPort: silicon-hill
