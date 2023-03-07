@@ -1,20 +1,19 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
-WORKDIR /app
-EXPOSE 80
-EXPOSE 443
+﻿# Build the operator
+FROM mcr.microsoft.com/dotnet/sdk:6.0 as build
+WORKDIR /operator
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
-WORKDIR /src
-COPY ["EdgeOperator/EdgeOperator.csproj", "EdgeOperator/"]
-RUN dotnet restore "EdgeOperator/EdgeOperator.csproj"
-COPY . .
-WORKDIR "/src/EdgeOperator"
-RUN dotnet build "EdgeOperator.csproj" -c Release -o /app/build
+COPY ./ ./
+RUN dotnet publish -c Release -o out ./EdgeOperator.csproj
 
-FROM build AS publish
-RUN dotnet publish "EdgeOperator.csproj" -c Release -o /app/publish
+# The runner for the application
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 as final
 
-FROM base AS final
-WORKDIR /app
-COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "EdgeOperator.dll"]
+RUN addgroup k8s-operator && useradd -G k8s-operator operator-user
+
+WORKDIR /operator
+COPY --from=build /operator/out/ ./
+RUN chown operator-user:k8s-operator -R .
+
+USER operator-user
+
+ENTRYPOINT [ "dotnet", "EdgeOperator.dll" ]
