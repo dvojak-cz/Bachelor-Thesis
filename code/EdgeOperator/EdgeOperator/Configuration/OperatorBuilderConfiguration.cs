@@ -1,3 +1,5 @@
+using cz.dvojak.k8s.EdgeOperator.Repository;
+using cz.dvojak.k8s.EdgeOperator.Services;
 using KubeOps.Operator;
 using Serilog;
 
@@ -27,5 +29,7 @@ public static class OperatorBuilderConfiguration
     {
         // === DI Setup ===
         builderServices.AddKubernetesOperator();
+        builderServices.AddScoped<IEdgeProxySetter, EdgeProxySetter>();
+        builderServices.AddScoped<DeploymentRepositoryTemplate>();
     }
 }

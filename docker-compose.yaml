@@ -1,0 +1,168 @@
+version: '3.5'
+
+services:
+  auth:
+    image: "gitlab.fit.cvut.cz:5000/dbs/dbs-microservices/nginx-unit-base:php8.1-1.0.2"
+    hostname: "auth"
+    environment:
+      APP_TEMPLATE: "symfony-dev"
+      XDEBUG_MODE: "off"
+      #XDEBUG_MODE: "develop,debug"
+      #XDEBUG_CLIENT_HOST: "127.0.0.1"
+      #RUN_DATABASE_MIGRATIONS: "true"
+    depends_on:
+      - postgres-db
+      - redis
+    volumes:
+      - ./Auth:/var/www/public
+    networks:
+      - internal
+    extra_hosts: # just for dev
+      - host.docker.internal:host-gateway
+    labels:
+      cz.cvut.fit.dbs.microservice: "Auth"
+      traefik.enable: true
+      traefik.http.routers.auth.rule: "PathPrefix(`/auth`)"
+      traefik.http.routers.auth.entrypoints: "web"
+      traefik.http.services.auth.loadbalancer.server.port: "9000"
+
+  connections:
+    image: "gitlab.fit.cvut.cz:5000/dbs/dbs-microservices/nginx-unit-connections:php8.1-1.0.1"
+    hostname: "connections"
+    environment:
+      APP_TEMPLATE: "symfony-dev"
+      XDEBUG_MODE: "off"
+      #XDEBUG_MODE: "develop,debug"
+      #XDEBUG_CLIENT_HOST: "127.0.0.1"
+      #RUN_DATABASE_MIGRATIONS: "true"
+    depends_on:
+      - postgres-db
+      - redis
+      - auth
+      - configurations
+      - rat
+      - pgparser
+      - mssqlparser
+    volumes:
+      - ./Connections:/var/www/public
+    networks:
+      - internal
+    extra_hosts:   # just for dev
+      - host.docker.internal:host-gateway
+    labels:
+      cz.cvut.fit.dbs.microservice: "Connections"
+      traefik.enable: true
+      traefik.http.routers.connections.rule: "PathPrefix(`/connections`)"
+      traefik.http.routers.connections.entrypoints: "web"
+      traefik.http.services.connections.loadbalancer.server.port: "9000"
+
+  configurations:
+    image: "gitlab.fit.cvut.cz:5000/dbs/dbs-microservices/nginx-unit-base:php8.1-1.0.2"
+    hostname: "configurations"
+    environment:
+      APP_TEMPLATE: "symfony-dev"
+      XDEBUG_MODE: "off"
+      #XDEBUG_MODE: "develop,debug"
+      #XDEBUG_CLIENT_HOST: "127.0.0.1"
+    depends_on:
+      - postgres-db
+      - redis
+      - auth
+    volumes:
+      - ./Configurations:/var/www/public
+    networks:
+      - internal
+    extra_hosts: # just for dev
+      - host.docker.internal:host-gateway
+    labels:
+      cz.cvut.fit.dbs.microservice: "Configurations"
+      traefik.enable: true
+      traefik.http.routers.configurations.rule: "PathPrefix(`/configurations`)"
+      traefik.http.routers.configurations.entrypoints: "web"
+      traefik.http.services.configurations.loadbalancer.server.port: "9000"
+
+  sw_configurations:
+    image: "gitlab.fit.cvut.cz:5000/dbs/dbs-microservices/nginx-unit-base:php8.1-1.0.2"
+    hostname: "sw_configurations"
+    environment:
+      APP_TEMPLATE: "symfony-dev"
+      XDEBUG_MODE: "off"
+      #XDEBUG_MODE: "develop,debug"
+      #XDEBUG_CLIENT_HOST: "127.0.0.1"
+    depends_on:
+      - postgres-db
+      - redis
+      - auth
+    volumes:
+      - ./SwConfigurations:/var/www/public
+    networks:
+      - internal
+    extra_hosts: # just for dev
+      - host.docker.internal:host-gateway
+    labels:
+      cz.cvut.fit.dbs.microservice: "Semestral work configurations"
+      traefik.enable: true
+      traefik.http.routers.sw_configurations.rule: "PathPrefix(`/sw-configurations`)"
+      traefik.http.routers.sw_configurations.entrypoints: "web"
+      traefik.http.services.sw_configurations.loadbalancer.server.port: "9000"
+
+  ### Database
+  postgres-db:
+    image: postgres:${POSTGRES_VERSION:-14}-alpine
+    restart: always
+    volumes:
+      - ./docker/postgres/pg_scripts/docker_postgres_init.sql:/docker-entrypoint-initdb.d/docker_postgres_init.sql
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: root
+    ports:
+      - "5432:5432"
+    networks:
+      - internal
+
+
+  ### Redis
+  redis:
+    image: "redis:6-alpine"
+    hostname: "redis"
+    networks:
+      - internal
+    ports:
+      - "6379:6379"
+
+  rat:
+    build: ./RAT
+    hostname: "rat"
+    networks:
+      - internal
+
+  pgparser:
+    build: ./pgparser
+    hostname: "pgparser"
+    networks:
+      - internal
+
+  mssqlparser:
+    build: ./mssqlparser
+    hostname: "mssqlparser"
+    networks:
+      - internal
+
+  traefik:
+    image: "traefik:v2.8"
+    container_name: "traefik"
+    ports:
+      - "80:80"
+      - "443:443"
+      # (Optional) Expose Dashboard
+      - "8080:8080"  # Don't do this in production!
+    volumes:
+      - ./docker/traefik:/etc/traefik
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./logs/traefik:/var/log/traefik/
+    networks:
+      - internal
+
+networks:
+  internal:

@@ -1,0 +1,11 @@
+---
+apiVersion: edge-operator.k8s.dvojak.cz/v1
+kind: Connection
+metadata:
+  name: test
+spec:
+  serviceName: sample-service
+  connections:
+    - deviceName: sample-device
+      applicationNames:
+        - sample-application

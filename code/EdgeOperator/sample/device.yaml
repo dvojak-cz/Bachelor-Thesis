@@ -1,0 +1,21 @@
+---
+apiVersion: edge-operator.k8s.dvojak.cz/v1
+kind: Device
+metadata:
+  name: sample-device
+spec:
+  nodeName: edge-node
+  isUp: true
+  ipAddress: 192.168.100.2
+---
+apiVersion: edge-operator.k8s.dvojak.cz/v1
+kind: Application
+metadata:
+  name: sample-application
+spec:
+  device: sample-device
+  services:
+    - name: sample-service
+      protocol: Tcp
+      port: 8080
+      isUp: true
