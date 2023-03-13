@@ -1,11 +1,10 @@
-using cz.dvojak.k8s.EdgeOperator.Definitions;
-using cz.dvojak.k8s.EdgeOperator.Enums;
-using cz.dvojak.k8s.EdgeOperator.Extends;
+using cz.dvojak.k8s.EdgeOperator.Configuration.Definitions;
+using cz.dvojak.k8s.EdgeOperator.Extends.KubeOps;
 using k8s.Models;
 using KubeOps.KubernetesClient.Entities;
 using KubeOps.Operator.Entities.Annotations;
 
-namespace cz.dvojak.k8s.EdgeOperator.Entities;
+namespace cz.dvojak.k8s.EdgeOperator.Models.Entities;
 
 [KubernetesEntity(Kind = "Application",Group = Api.Group,ApiVersion = Api.ApiVersion)]
 [EntityScope(EntityScope.Cluster)]

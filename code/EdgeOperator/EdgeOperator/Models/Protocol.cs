@@ -1,4 +1,4 @@
-namespace cz.dvojak.k8s.EdgeOperator.Enums;
+namespace cz.dvojak.k8s.EdgeOperator.Models;
 
 public enum Protocol
 {

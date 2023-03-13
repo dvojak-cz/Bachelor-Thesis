@@ -1,4 +1,4 @@
-namespace cz.dvojak.k8s.EdgeOperator.Definitions;
+namespace cz.dvojak.k8s.EdgeOperator.Configuration.Definitions;
 
 public static class Api
 {

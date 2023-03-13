@@ -1,48 +1,59 @@
-using cz.dvojak.k8s.EdgeOperator.Entities;
+using cz.dvojak.k8s.EdgeOperator.Models.Entities;
+using cz.dvojak.k8s.EdgeOperator.Services.Builders;
 using k8s.Models;
 using KubeOps.KubernetesClient;
 
 namespace cz.dvojak.k8s.EdgeOperator.Services;
 
-public class ProxyCreator
+public class ProxyCreator : IProxyCreator
 {
-    readonly private IEdgeProxySetter _edgeProxySetter;
     readonly private IKubernetesClient _client;
-    
-    
-    
-    
-    public ProxyCreator(IEdgeProxySetter edgeProxySetter,IKubernetesClient client)
+    readonly private IProxyDeploymentBuilder _proxyDeploymentBuilder;
+    readonly private IProxyContainerBuilder _proxyContainerBuilder;
+    public ProxyCreator(
+        IKubernetesClient client,
+        IProxyDeploymentBuilder proxyDeploymentBuilder,
+        IProxyContainerBuilder proxyContainerBuilder)
     {
-        _edgeProxySetter = edgeProxySetter;
         _client = client;
-    }
-
-    public string GetProxyName(ConnectionEntity entity) => $"proxy-{entity.Metadata.Name}";
-
-    private void SetBasicMetadata(V1Deployment depl)
-    {
-        _edgeProxySetter.SetOperatorLabels(depl);
-        _edgeProxySetter.SetTolerations(depl);
-        _edgeProxySetter.SetNodeSelector(depl);
-    }
-
-    private void SetProxy()
-    {
+        _proxyDeploymentBuilder = proxyDeploymentBuilder;
+        _proxyContainerBuilder = proxyContainerBuilder;
         
     }
 
-    public async Task<V1Deployment> CreateProxyDeployment(ConnectionEntity entity, string network_name)
+    public string GetProxyName(ConnectionEntity entity) => $"proxy-{entity.Metadata.Name}";
+    
+    public async Task<V1Deployment> CreateProxyDeployment(ConnectionEntity entity,string networkName)
     {
-        var depl = new V1Deployment();
-        depl.Metadata.Name = GetProxyName(entity);
-        SetBasicMetadata(depl);
+        var device = await _client.Get<DeviceEntity>(entity.Spec.DeviceName);
+        if (device is null)
+            throw new NullReferenceException($"Device {entity.Spec.DeviceName} could not been found");
+        var node = await _client.Get<V1Node>(device.Spec.NodeName);
+        if (node is null)
+            throw new NullReferenceException($"Node {device.Spec.NodeName} could not been found");
+        var allApplications = await _client.List<ApplicationEntity>();
+        var application = allApplications.Where(a => entity.Spec.ApplicationNames.Contains(a.Metadata.Name)).ToList();
+        if (application.Count != entity.Spec.ApplicationNames.Count)
+            throw new Exception("Not all applications could be found");
 
-        var device = await _client.Get<DeviceEntity>(entity.Spec.DeviceName); //todo null
-        var node = await _client.Get<V1Node>(device.Spec.NodeName); //todo null
-        _edgeProxySetter.SetNode(depl,node);
-        _edgeProxySetter.SetAdditionalNetwork(depl,network_name);
-        return depl;
+
+        
+        foreach (var a in application.Select(applicationEntity => applicationEntity.Spec.Services))
+            _proxyContainerBuilder.Add(device.Spec.IpAddress,a.ToArray());
+        var containers = _proxyContainerBuilder.Build();
+
+        var deployment = _proxyDeploymentBuilder
+            .SetName(GetProxyName(entity))
+            .SetDeploymentLabels()
+            .SetPodLabels()
+            .SetPodNetwork("")
+            .SetPodNodeSelector()
+            .SetPodNode(node)
+            .SetPodTolerations()
+            .SetContainers(containers)
+            .Build();
+
+        return deployment;
     }
 
 }

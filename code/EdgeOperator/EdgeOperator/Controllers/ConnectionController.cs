@@ -1,4 +1,4 @@
-using cz.dvojak.k8s.EdgeOperator.Entities;
+using cz.dvojak.k8s.EdgeOperator.Models.Entities;
 using k8s.Models;
 using KubeOps.KubernetesClient;
 using KubeOps.Operator.Controller;
@@ -12,8 +12,8 @@ namespace cz.dvojak.k8s.EdgeOperator.Controllers;
 [EntityRbac(typeof(ApplicationEntity),Verbs = RbacVerb.Get)]
 public class ConnectionController : IResourceController<ConnectionEntity>
 {
-    private readonly ILogger<ConnectionController> _logger;
-    private readonly IKubernetesClient _client;
+    readonly private ILogger<ConnectionController> _logger;
+    readonly private IKubernetesClient _client;
 
     public ConnectionController(ILogger<ConnectionController> logger,IKubernetesClient client)
     {
@@ -50,7 +50,7 @@ public class ConnectionController : IResourceController<ConnectionEntity>
             return false;
         }
         var applications = await _client.List<ApplicationEntity>();
-        var requiredAppliacations = applications.Where(a => entity.Spec.ApplicationNames.Contains(a.Metadata.Name));
+        var requiredAppliacations = applications.Where(a => entity.Spec.ApplicationNames.Contains(a.Metadata.Name)).ToList();
         if (requiredAppliacations.Count() != entity.Spec.ApplicationNames.Count)
         {
             _logger.LogWarning("Application {applicationName} not found",entity.Spec.ApplicationNames);
