@@ -4,7 +4,7 @@ kind: Device
 metadata:
   name: sample-device
 spec:
-  nodeName: edge-node
+  nodeName: minikube
   isUp: true
   ipAddress: 192.168.100.2
 ---

@@ -12,14 +12,36 @@ public class ProxyDeploymentBuilder : IProxyDeploymentBuilder
     public ProxyDeploymentBuilder(IOptions<DeploymentTemplateOption> deploymentTemplateOption)
     {
         _deploymentTemplateOption = deploymentTemplateOption.Value;
-        _deployment = new V1Deployment();
+        Reset();
     }
 
     public V1Deployment Build() => _deployment;
 
     public IProxyDeploymentBuilder Reset()
     {
-        _deployment = new V1Deployment();
+        _deployment = new V1Deployment()
+        {
+            Metadata = new V1ObjectMeta()
+            {
+                Labels = new Dictionary<string,string>(),
+                Annotations = new Dictionary<string,string>()
+            },
+            Spec = new V1DeploymentSpec()
+            {
+                Template = new V1PodTemplateSpec()
+                {
+                    Metadata = new V1ObjectMeta()
+                    {
+                        Labels = new Dictionary<string,string>(),
+                        Annotations = new Dictionary<string,string>()
+                    },
+                    Spec = new V1PodSpec()
+                    {
+                        Containers = new List<V1Container>()
+                    }
+                }
+            },
+        };
         return this;
     }
 

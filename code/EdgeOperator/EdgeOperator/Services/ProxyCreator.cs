@@ -42,7 +42,7 @@ public class ProxyCreator : IProxyCreator
             _proxyContainerBuilder.Add(device.Spec.IpAddress,a.ToArray());
         var containers = _proxyContainerBuilder.Build();
 
-        var deployment = _proxyDeploymentBuilder
+        /*var deployment = _proxyDeploymentBuilder
             .SetName(GetProxyName(entity))
             .SetDeploymentLabels()
             .SetPodLabels()
@@ -51,9 +51,17 @@ public class ProxyCreator : IProxyCreator
             .SetPodNode(node)
             .SetPodTolerations()
             .SetContainers(containers)
-            .Build();
+            .Build();*/
 
-        return deployment;
+        _proxyDeploymentBuilder.SetName(GetProxyName(entity));
+        _proxyDeploymentBuilder.SetDeploymentLabels();
+        _proxyDeploymentBuilder.SetPodLabels();
+        _proxyDeploymentBuilder.SetPodNetwork("");
+        _proxyDeploymentBuilder.SetPodNodeSelector();
+        _proxyDeploymentBuilder.SetPodNode(node);
+        _proxyDeploymentBuilder.SetPodTolerations();
+        _proxyDeploymentBuilder.SetContainers(containers);
+        return _proxyDeploymentBuilder.Build();
     }
 
 }
