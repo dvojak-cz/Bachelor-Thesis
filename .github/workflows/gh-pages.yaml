@@ -5,10 +5,8 @@ env:
 
 on:
   push:
-    branches:
-      - master
-    paths:
-      - doc/**
+    branches: ["master"]
+    paths: ["doc/**"]
   workflow_dispatch:
 
 
@@ -20,7 +18,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest 
+    runs-on: ubuntu-latest
     steps:
       - name: clone
         uses: actions/checkout@v3

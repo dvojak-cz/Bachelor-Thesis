@@ -8,9 +8,7 @@ env:
 on:
   push:
     branches: ["master", "text", "ci"]
-    paths:
-      - text/**
-      - .github/workflows/pdf-build.yml
+    paths: ["text/**"]
   workflow_call:
     outputs:
       ARTEFACT_NAME:
