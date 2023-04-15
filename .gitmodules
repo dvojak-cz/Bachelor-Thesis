@@ -1,0 +1,3 @@
+[submodule "code/EdgeOperator"]
+	path = code/EdgeOperator
+	url = ../Edge-Operator
