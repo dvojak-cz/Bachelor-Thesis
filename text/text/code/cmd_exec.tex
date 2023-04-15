@@ -1,0 +1,9 @@
+\begin{lstfloat}
+\begin{lstlisting}[
+style=mybashstyle,
+caption={Příkaz převedení výpisu z konzole na spustitelný script},
+label={cmd:exec}
+]
+[_]$ sed 's /^\[[[:digit:]_]\]\$ // ; /^>>>/ d' blok.sh | tee script.sh
+\end{lstlisting}
+\end{lstfloat}

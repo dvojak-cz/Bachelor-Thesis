@@ -1,0 +1,22 @@
+\begin{lstfloat}
+\begin{lstlisting}[
+style=mybashstyle,
+caption={Definice connection - invalid},
+label={sample:deviceInValid}
+]
+[_]$ cat > device.yaml <<EOF
+apiVersion: edge-operator.k8s.dvojak.cz/v1
+kind: Device
+metadata:
+  name: invalid
+spec:
+  nodeName: kmaster
+  ipAddress: i_am_invalid_ip
+  components:
+    - name: tcp-udp-stream
+      handlers:
+        - {'name':<~>'tcp', 'port':<~>15}
+        - {'name':<~>'udp', 'port':<~>15}
+EOF
+\end{lstlisting}
+\end{lstfloat}

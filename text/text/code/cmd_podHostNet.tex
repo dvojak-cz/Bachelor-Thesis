@@ -1,0 +1,40 @@
+\begin{lstfloat}
+\begin{lstlisting}[
+style=mybashstyle,
+caption={Nastavení síťových prostředků v podu pro hostNetwork=true},
+label={cmd:podHostNet}
+]
+# Crete pod with ".spec.hostNetwork=true"
+[1]$ kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+spec:
+  hostNetwork: true
+  containers:
+    - image: nicolaka/netshoot:v0.9
+      name: my-pod
+      command: ["tail"]
+      args: ["/dev/random"]
+EOF
+
+# Attach to newly created pod
+[1]$ kubectl exec -it my-pod -- bash
+
+# List network interfaces
+[2]$ ip --br l
+>>> lo               UNKNOWN 00:...:00 <LOOPBACK,UP,LOWER_UP> 
+>>> bridge           UP      8e:...:0c <BROADCAST,MULTICAST,UP,LOWER_UP> 
+>>> veth2553bd1f@if2 UP      0e:...:49 <BROADCAST,MULTICAST,UP,LOWER_UP> 
+>>> eth0@if10        UP      02:...:02 <BROADCAST,MULTICAST,UP,LOWER_UP>
+
+# List network interfaces and IP adresses assiged to them
+[2]$ ip --br a
+>>> lo               UNKNOWN 127.0.0.1/8 
+>>> docker0          DOWN    172.17.0.1/16 
+>>> bridge           UP      10.244.0.1/16 
+>>> veth2553bd1f@if2 UP
+>>> eth0@if10        UP      192.168.49.2/24
+\end{lstlisting}
+\end{lstfloat}

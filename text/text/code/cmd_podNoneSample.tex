@@ -1,0 +1,14 @@
+\begin{lstfloat}
+\begin{lstlisting}[
+style=mybashstyle,
+caption={Kontejner s prázdným síťovým jmenným prostorem},
+label={cmd:podNoneSample}
+]
+# Create docker container without setting up a network
+[1]$ docker run -it --net none travelping/nettools
+
+# List network interface inside the container 
+[2]$ ip --br l
+>>> lo  UNKNOWN    00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP>
+\end{lstlisting}
+\end{lstfloat}
