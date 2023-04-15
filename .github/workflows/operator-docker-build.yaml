@@ -7,9 +7,7 @@ env:
 on:
   push:
     branches: ["master", "ci"]
-    paths:
-      - code/EdgeOperator/**
-      - .github/workflows/operator-docker-build.yaml
+    paths: ["code/EdgeOperator/**"]
   workflow_call:
     outputs:
       ARTEFACT_NAME:

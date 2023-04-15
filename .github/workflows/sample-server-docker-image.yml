@@ -7,9 +7,7 @@ env:
 on:
   push:
     branches: ["master", "ci"]
-    paths:
-      - code/sampleServers/**
-      - .github/workflows/sample-server-docker-image.yml
+    paths: ["code/sampleServers/**"]
   workflow_call:
 
 jobs:
