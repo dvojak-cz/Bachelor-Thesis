@@ -9,6 +9,7 @@ on:
     branches: ["master", "ci"]
     paths: ["code/sampleServers/**"]
   workflow_call:
+  workflow_dispatch:
 
 jobs:
   build_and_publish_tcp:
