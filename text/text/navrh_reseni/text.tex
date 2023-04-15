@@ -1,0 +1,90 @@
+\chapter{Návrh řešení}
+
+\begin{chapterabstract}
+Tato kapitola se zaměří na hledání problému popsáného v úvodní části. Cílem této kapitoly je představit různé způsoby řešení problému a poukázat na výhody respektive nevýhody daného řešení.
+
+Pro porozumění této kapitoly je dobré být seznámen se základním fungování orchestrátoru kubernetes a principy síťování, který tento orchestrátor nabízí.  
+\end{chapterabstract}
+Předchozí dvě sekce se zabývali pouze komunikací uvnitř klastru, která umožňuje komunikaci pouze mezi objekty kubernetes. V případě potřeby komunikace mimo síť klastru kubernetes poskytuje 3 řešení. port, loadbalancer, ven z kontejneru.
+Prvním způsobem je prostá komunikace z 
+
+
+\section{Definice problém}
+V úvodu a v zadání této práce je nastíněný problém komunikace mezi vnitřní sítí klastru a případnou privátní sítí, která je dostupná alespoň z jednoho uzlů klastru. 
+
+Síťovou komunikací budeme myslet komunikaci probíhající na síťové vrstvě ISO/OSI modelu konkrétně pomocí protokolu IP, pro účely této práce se převážně zaměříme na protokoly TCP a UDP, které se nacházejí na abstraktní vrstvě o jedno výše.
+
+Kubernetes poskytuje řešení pro několik typů síťové komunikace. Nejzákladnějším z nich je komunikace mezi libovolnými pody, kteří jsou součástí jednoho klastru. Pro tento druh datového přenosu nepřináší kubernetes žádnou formu omezení. Přenos je umožněn plně všemi směry. Komunikace směrem do klastru z okolní sítě také není nijak zvláštně omezen. Pro tuto komunikaci lze využít některé ze standarních objektů, které kubernetes nabízí (ingress, service). Tento druh přenosu vyžaduje konfiguraci klastru, ale je umožněn.
+
+Posledním druhem komunikace je spojení klastru s okolní sítí, která není součástí interní sítě kubernetes. Toto spojení je bezproblémové, v případě, že objekt v klastru adresuje objekt, který je \textit{veřejně dostupný} v okolní síti. Příkladem takového spojení je například odeslání požadavku na veřejný DNS server. V případě, že některá z aplikací běžících v kubernetes se obrátí například na server \verb|8.8.8.8|\footnote{8.8.8.8 je známy DNS server spravovaný spoječností Google}, pak komunikace proběhne následujícím způsobem. Požadavek je na jednom z uzlů klastru pozměně, tak aby byl validním v okolní síti mimo klastr (typicky je pozměněna hlavička TCP či UDP - pomocí SNAT) a poté je požadavek vyslán do okolní sítě klastru.
+
+Problém nastává, pokud je vyžadována komunikace s okolní \textit{privátní} sítí. Privátní sítí myslíme síťový segment, který není dostupný ve veřejném internetu a zároveň není dostupný ze všech uzlů klastru. Tato situace je ilustrována na schématu \ref{fig:schema}
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/schema.png}
+    \caption{schema}
+    \label{fig:schema}
+\end{figure}
+
+V uvedeném příkladu je privátní síť a interní síť spojena pouze jedním z uzlů klastru \textbf{UZEL}. Tento \textbf{UZEL} je do privátní sítě \textbf{A} a interní kubernetes sítě \textbf{B} spojen dvěma různými sítovými kartami.   V obecném případě může více uzlů být připojeno do více privátních sítí a zároveň jedna privátní síť může být propojena s klastrem více uzly.
+
+V případě takového nastavení není přímo komunikace se zařízeními v privátních sítích umožněna\footnote{Neznal ji nikdo koho jsem oslovil - mam tam toot nejka zakomponovat?}.
+
+Následující část práce bude zaměřena na hledání způsobu, jakým zmíněnou komunikaci umožnit tak, aby co nejvíce vyhovovala stanoveným požadavkům. 
+
+\subsection{Požadavky na řešení problému}
+Pro účel této práce dává smysl stanovit požadavky na hledané řešení. Požadavky na hledané řešení jsou následující:
+\begin{itemize}
+    \item Oboustrannost komunikace\\
+    Komunikace by měla umožňovat oba směry-z klastru do privátní sítě a z privátní sítě do klastru. I přesto, že jeden ze směrů je umožněn přímo návrhem kubernetes, tak konfigurace této komunikace není jednoduchá. 
+    \item Obecnost řešení\\
+    Řešení my mělo pokrýt všechny možné, výše zmíněné, situace. Mělo by umožňovat propojení s více privátními sítěmi za použití více než jednoho uzlu.
+    \item Podpora TCP, UDP\\
+    Řešení by mělo plně podporovat komunikaci pomocí síťových protokolů TCP a UDP a protokolů z vyšších abstrakčních kategorií 
+    \item Jednoduchost\\
+    Řešení by mělo být jednoduché z pohledu uživatele případně administrátora klastru. Jeho používání by nemělo být nijak zvláště náročné s porovnáním používání jiných služeb kubernetes. To samé platí pro jeho zavedení a připadnou integraci do již existujícího kubernets klastru. Používání i zavedení řešení by mělo podporovat zavedené způsoby komunikace s klastrem.
+    \item Bezpečnost řešení\\
+    Řešení by mělo být bezpečné a nijak významně by nemělo snižovat bezpečnost při použití  
+\end{itemize}
+\noindent\makebox[\linewidth]{\rule{\paperwidth}{0.4pt}}
+
+\section{Komunikace z vně klastru s Service}
+
+\subsection{Kube~edge}
+Kube~edge je projekt společnosti cloud~native~computing~foundation, který rozšiřující kubernetes pro použití orchestrátoru na koncových zařízení. Cílem projektu kube~edge je usnadit provoz kubenets na zařízeních, které mohou mít omezené prostředky, jejich připojení není stále a stabilní a jsou provozovány na různých lokacích. Kube~edge umožňuje tyto zařízení integrovat do existujícíh kubernetes klastrů. Díky tomuto lze dobře pracovat s různými zařízeními, jako jsou například IoT devices, zařízení pro chytrá města, různé senzory\ldots
+
+Kube edge je převážně určen k integraci zařízeních, na kterých je možné provozovat samotné kontejnery a službu kubelet. Primární účel kube edge se tedy neřeší výše popsaný problém, ale je velmi úzce spjatý s komunikací určitých zařízení a interní sítě kubernetes. Z tohoto důvodu lze v implementaci kuebedge nalést alespoň částečné řešení zmíněného problému a to pro komunikaci pomocí za pomocí MQTT protokolu, případně protokolu HTTP.
+
+Kube edge obsahuje celkem 6 komponent, pro potřeby provozování edge devices. Jednou z těchto komponent je EventBus.
+
+Další komponentou  systému Kube edge je ServiceBus
+
+I přesto, že poupravená ServiceBus by splila požadavky, tak je to na prd. UDP neni obousmerne, nechceme nic prepisovat, kube edge je velky
+
+https://github.com/kubeedge/kubeedge/blob/master/edge/pkg/servicebus/servicebus.go:171
+
+\subsection{Lze využít NPN, Consul - nelze(není dostupné)}
+VPN nelze, jelikoz device neni pristupny z verejne site
+
+Consul by sel, ale neumoznuje M:N vazbu
+
+
+
+\subsection{CNI}
+Lze nafejkovat pomoci calica\\
+Vlastní CNI - bych chipnul\\
+nektere CNI to podporuji, ale je to momezeni na pouziti daneho CNI
+
+\subsection{Kubernetes}
+Oficiální k8s není řešení\\
+Lze pouzit ohstnetwork true - ale to neni bezpecne\\
+
+
+
+
+
+
+
+\subsection{hura plumbing group}
+

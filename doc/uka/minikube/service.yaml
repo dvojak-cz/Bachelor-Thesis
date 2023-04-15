@@ -1,0 +1,22 @@
+metadata:
+  name: dop-test
+  namespace: default
+spec:
+  ports:
+  - name: tcptcp8080
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  - name: udpudp9090
+    port: 9090
+    protocol: UDP
+    targetPort: 9090
+  - name: httphttp8000
+    port: 8000
+    protocol: UDP
+    targetPort: 8000
+  selector:
+    app: dop-test
+  type: ClusterIP
+apiVersion: v1
+kind: Service

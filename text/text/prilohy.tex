@@ -1,0 +1,38 @@
+\chapter{Ukázky objektů kubernetes}
+\begin{figure}
+\caption{Ukázka reprezentace onbjketu POD}
+\label{fig:def_pod}
+\begin{verbatim}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: name-of-the-pod
+spec:
+  containers:
+  - name: container-name-running-in-the-pod
+    image: "nginx:latest"       
+\end{verbatim}
+\end{figure}
+
+\begin{figure}
+\caption{Ukázka reprezentace objektu DEPLOYMENT}
+\label{fig:def_deployment}
+\begin{verbatim}
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: deployment-name
+spec:
+  replicas: 3 # 3 instances of pod should be running
+  template:   # template for pod
+    metadata:
+    spec:
+      containers:
+      - name: container-name-running-in-the-pod
+        image: "nginx:latest"       
+      
+\end{verbatim}
+\end{figure}
+

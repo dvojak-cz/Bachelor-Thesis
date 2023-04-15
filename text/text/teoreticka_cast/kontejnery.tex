@@ -1,0 +1,124 @@
+\section{Kontejnery}
+Kontejnerizace je způsob virtualizace a izolace prostředí na úrovni operačního systému. Díky kontejnerizaci je možné jednoduše spravovat více aplikací na jednom stroji. V této práci se budeme bavit převážně o aplikačních kontejnerech, proto kdykoliv v textu je uveden výraz kontejner, řeč je právě o kontejneru aplikačním. Výrazem kontejner reprezentuje běžící instanci kontejnerového obrazu (container image). Dále se zaměříme pouze na linuxové kontejnery splňující Open~Container~Initiative specifikaci.
+
+Pro lepši přiblíženi kontejnerů a kontejnerizace obecně, doporučuji článek \textit{Learning Containers From The Bottom Up} od \textit{Ivan~Velichko} \footnote{https://iximiuz.com/en/posts/container-learning-path/} a přednášku \textit{Kontejnery - principy a Docker} od \textit{Ing.~Tomáše~Vondry,~Ph.D.}
+\subsection{Open~Container~Initiative}
+Za velký pokrok v oblasti kontejnerizace z velké části může společnost Docker,~Inc, která je autorem stejnojmenné technologie docker. Docker vznikl jako interní nástroj pro poskytování služeb ve společnosti dotCloud. V roce 2013 společnost se dotCloud přetransformovala do společnosti Docker,~Inc. \cite{poulton_2020_docker}
+
+Technologie docker zažila masivní úspěch. Právě kvůli vzrůstající popularitě kontejnerizace vznik projekt názvem Open~Container~Initiative (zkráceně \term{OCI}).
+
+Dle oficiálních stránek OCI, je OCI projekt, který vznikl za účelem vytvoření a udržovaní otevřených standardů pro formát kontejnerů a běhových prostředí kontejnerů (container runtime). Na projektu OCI se podílí jak nadšeni jednotlivci, tak i velké společnosti jako je například RedHat, IBM, Docker a další. OCI poskytuje sadu standardů pro kontejnerové technologie. Díky těmto standardům jsou dnes jasně definovaná rozhraní, na které se mohou spoléhat jiné technologie pracující právě s kontejnery.\cite{about}
+
+Open~Container~Initiative momentálně spravuje tři standardy. Konkrétně se jedná o \textit{Runtime~Specification}, \textit{Image~Specification} a \textit{Distribution~Specification}.\cite{about}
+
+\textit{Image~Specification}(česky specifikace obrazu kontejneru) definuje převážně podobu manifestů pro kontejnery a rejstříky kontejnerů.
+První část specifikace definuje podobu manifestu pro obraz kontejneru. Cílem je zajistit, adresovatelnost jednotlivých konfigurací obrazů kontejneru. Toho je docíleno pomocí hašovaní a generování unikátních identifikátorů. Další část specifikace popisuje rejstřík, pro uchovávání jednotlivých manifestů kontejnerů. Třetí část specifikace popisuje způsob, jakým serilalizovat filesystém kontejneru a změny tohoto filesystému. Poslední část specifikace definuje formát pro popis obrazu kontejneru. Tento formát obsahuje potřebné informace pro běhové prostředí kontejnerů. Jedná se převážně o metadata obrazu kontejneru a popis filesystému kontejneru.\cite{a2022_image}
+
+\term{Runtime~Specification}(česky specifikace běhového prostředí) specifikuje konfiguraci, běhové prostředí a životní cyklus kontejneru. V prví části jsou vydefinovány možné stavy kontejnerů a jejich význam, podporované operace s kontejnery (spuštění, pozastavení\ldots) a životní cyklus kontejneru. Druhá část specifikace popisuje konfigurační soubor, který je použit při práci s kontejnery. Zbylá části obsahují různá rozšíření a popis běhového prostředí již pro konkrétní platformy. Popisovanými a proto i podporovanými platformami jsou \term{Linux}, \term{Solaris}, \term{Windows}, \term{virtuální stroje} a \term{z/OS}\footnote{z/OS je operační systém vyvíjeny spojeností IBM}. Nejdůležitější platformou pro účely této práce je Linux. V runtime specifikaci pro Linux je určeno, jaké prostředky mají být použity pro korektní běh kontejnerů. Konkrétně se jedná o \term{namespaces}, \term{cgroups}, \term{capabilities}, \term{LSM} a \term{jail root}. Díky těmto nástrojům zle dosáhnout požadované virtualizace na linuxových systémech.\cite{a2022_open}
+
+Poslední specifikací OCI je \term{Distribution~Specification}. Jedná se o nejnovější specifikaci v rámci Open~Container~Initiative. Tato specifikace popisuje API protokol, který slouží pro komunikaci mezi image container registry\footnote{Container registry označuje službu, implementuje API dle zmíněné specifikace. Jedná se o službu, která poskytuje vzdálené úložiště pro obrazy kontejnerů. Příkladem takové služby je DockerHub.} a běhovým prostředí kontejnerů respektive klientem běhového prostředí.\cite{a2023_open}
+
+
+\subsection{Síťování kontejnerů}
+Linuxové kontejnery dle standardu OCI pro izolaci síťování používají \term{síťové jmenné prostory}(network namespaces).
+Síťový jmenný prostor je jeden z osmy jemných prostorů jádra linuxového operačního systému, které slouží k izolaci globálních prostředků jádra. Díky této izolaci lze procesy oddělit od nepotřebných systémových zdrojů. Síťový jmenný prostor abstrahuje veškeré prostředky spojené se síťováním. Mezi abstrahované prostředky patří například zařízení pro síťová zařízení, IP adresy, IP tables a další.\cite{a2022_namespaces7}\cite{a2022_network_namespaces7}
+
+V manuálových stránkách o síťovém jmenném prostoru jsou zmíněné následující informace. \emph{Síťové zařízení může být součástí právě jednoho síťového jmenného prostoru.} \emph{Pár dvou virtuální síťové zařízení (veth) může sloužit pro propojení dvou sítových zařízení v dvou jiných jmenných prostorech}.\cite{a2022_network_namespaces7} Tyto dvě věty velmi dobře popisují, jak je možné propojit kontejnery s okolním světem.\\
+Většina implementací kontejnerů propojuje síť uvnitř kontejneru s okolním světem následujícím způsobem \footnote{způsobů je celá řada, ukázka různých implementací pro běhové prostředí docker je uvedena na oficiálních stránkách společnosti Docker -- \url{https://docs.docker.com/network/}}. Předpokládejme, již běžící docker container bez nastaveného síťování. Tohoto lze dosáhnout pomocí následujícího příkazu.
+\begin{verbatim}
+[1]$ docker run --net none travelping/nettools
+\end{verbatim}
+Zmíněným příkazem získáme běžící proces \verb|/bin/sh|, který bude oddělený od hostujícího sytému pomocí prostředků jádra linuxového operačního systému. V tuto chvíli máme funkční linuxový kontejner, který ale není nijak připojen s okolní sítí. Aktuálně se proces bude nacházet v novém síťovém prostoru, který nám byl dockerem vytvořen. Tento prostor bude obsahovat pouze síťové rozhraní typu loopback. 
+
+\begin{verbatim}
+[_]$ ip --brief link show
+>>> lo  UNKNOWN    00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP>
+\end{verbatim}
+
+Proto abychom se mohli z kontejneru připojit do veřejné sítě, případně se ze sítě připojit do kontejneru, je potřeba toto spojení vytvořit. Připojení  dockeru a pomocí síťového ovladače (driveru) \textit{bridge} se skládá z následujících kroků. Pořadí kroků odpovídá pořadí provádění v implementaci dockeru.
+\begin{enumerate}
+\item Vytvoření síťového jmenného prostoru \\
+Jako první se vytvoří jmenný prostor, pro kontejner. Všechny procesy, které běží v kontejneru budou součástí tohoto prostoru.\footnote{Pozor docker nevytváří soubor v \verb-/var/run/net- proto není jmenný prostor vidět pomocí \verb-ip~netns~list-.}
+\item Vytvoření rozhraní typu bridge \\
+Dalším krokem je vytvoření rozhraní typy bridge. Linuxový bridge je virtuální rozhraní, které primárně slouží k propojení více síťových segmentů. Propojení probíhá na druhé respektive třetí (záleží na použití) vrstvě modelu ISO/OSI. Toto rozhraní je vytvořeno v kořenovém prostoru hostujícího zařízení. V dockeru se toto rozhraní nazývá \verb|docker0|
+\item Vytvoření páru rozhraní typu \verb|veth peer|\\
+Pro komunikaci mezi jmennými prostory je vytvořen pár virtuálních rozhraní, které jsou mezi sebou propojeny tak, že si navzájem přeposílají veškerou komunikaci. Tento pár slouží, jako prostředek komunikace mezi dvěma jmennými sítovými prostory.
+\item Vložení jednoho rozhraní \verb|veth| do síťového jmenného prostoru \\
+V tomto kroku se vloží jeden z konců páru do vytvořeného jmenného prostoru. 
+\item Připojení druhého konce \verb|veth| páru do vytvořeného bridge rozhraní \\
+Nyní se jeden z virtuálních páru připojí do bridge. V tuto chvíli je vytvořena cesta mezi rozhraní uvnitř kontejneru a vytvořeným bridgem. Pokud by se v systému nacházely další kontejnery se sítí nastavenou stejně stejným, pak by byly tyto kontejnery propojeny mezi sebou právě pomocí tohoto bridge rozhraní.
+\item Přidělení IP adres pro bridge a \verb|veth| uvnitř jmenného prostoru \\
+Nyní se v kontejneru nakonfiguruje rozhraní. Součástí konfigurace je přidělení IP adresy, masky\ldots  
+\item Zapnutí potřebných rozhraní \\
+\item Nastavit NAT a IP Masquerade v hostujícím jmenného prostoru \\
+Proto aby bylo možné se z rozhraní bridge propojit na okolní síť, je na hostujícím systému nastavena NAT a IP Masquerade. Toto je prováděno pomocí prostředků kernelu, konfigurace je prováděna na úrovni iptables a přeposílání paketů.
+\end{enumerate}
+Zmíněné kroky lze provést následujícími příkazy.
+\begin{verbatim}
+# Create container without any network
+[_]$ docker run --rm -it --net none --name example travelping/nettools &
+
+# Reference namespace that docker has created for us
+[_]$ mkdir -p /var/run/netns
+[_]$ touch /var/run/netns/docker
+[_]$ mount -o \
+        bind /proc/`docker inspect -f '{{.State.Pid}}' example`/ns/net \
+        /var/run/netns/docker
+
+# Create veth pair
+[_]$ ip link add ceth0 type veth peer name veth0
+
+# Move one interface to docker net namespace 
+[_]$ ip link set netns docker dev veth0
+
+# Create bridge
+[_]$ ip link add br0 type bridge
+
+# Connect second interface to bridge
+[_]$ ip link set veth0 master br0
+
+# Add IPs to interaces
+[_]$ ip netns exec docker ip addr add 192.168.1.100/24 dev ceth0
+[_]$ ip addr add 192.168.1.50/24 dev br0
+
+# Set default gateway for docekr to bridge
+[_]$ ip netns exec docker ip route add default via 192.168.1.50
+
+# Set all interface to up state
+[_]$ ip netns exec docker ip link set up dev ceth0
+[_]$ ip link set up dev br0
+[_]$ ip link set up dev veth0
+\end{verbatim}
+
+Tento popsaný postupu odpovídá implementace pro docker pomocí sítového ovladače bridge. Pro lepší pochopení a vizualizaci výsledného stavu je kdys pozici obrázek \ref{img:ContainerNetworking}.\\
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.9\textwidth]{images/ContainerNetworking.png}
+\caption{~Schéma síťování pro ovladač bridge v docker}\label{img:ContainerNetworking}
+\end{figure}
+
+Kontejner má díky OCI jasně definované jakým způsobem izolovat síťový provoz v kontejneru. Žádná z OCI specifikací nedefinuje jak umožnit kontejnerům komunikaci i mimo jeho jmenný síťový prostor. Právě protože komunikace mimo kontejner není součástí specifikace OCI, různé implementace kontejnerových řešení řeší problematiku různými způsoby. Jednou z těchto implementací je právě již zmíněný ovladač bridge implementovaný společností dockeru. Aby tyto implementace měly stejné rozhraní, tak byl vytvořen standart \term{Container~Network~Interface}.
+
+\subsection{Container~Network~Interface}
+CNI (Container~Network~Interface) je standart, který spravuje stejnojmenný projekt. CNI je součástí Cloud~Native~Computing~Foundation. Tento standart byl vytvořen za cílem definovat jednotné API (rozhraní pro programování aplikací) pro přídavné moduly (pluginy), které umožňují správu a konfiguraci síťového připojení pro kontejnery.\footnote{Jednotlivé implementace standardu CNI se nazývají zásuvné moduly (plugins).} Jedním z takových modulů je výše zmíněný bridge. Jedná se o otevřený standard, který umožňuje programům spravovat síťové připojení pro kontejnery. Nejčastěji jsou moduly používány orchestrátory kontejnerů, případně běhovými prostředími kontejnerů. Standart CNI je plně kompatibilní se standardem OCI.
+
+Ve standardu je CNI označován jako \textit{množina standardu, definující rozhraní pro síťování kontejneru}. Specifikace definuje následující:
+\begin{enumerate}
+    \item Formát pro administrátory k definování síťové konfigurace \\
+    CNI definuje formát souboru pro konfiguraci dostupných CNI modulů. Tento soubor slouží administrátorům pro nastavení a určení podporovaných modulů. Tento soubor je následně používán aplikacemi spravující kontejnery (runtimes). Dle dodané konfigurace runtimes pracují s jednotlivými CNI. \\
+    Konfigurace se skládá z JSON objektu, který obsahuje aktuální verzi CNI standartu, název a list podporovaných modulů. List o objektů pak obsahuje odkaz na daný modul, standardně definované parametry a vlastní parametry modulu.
+    \item Protokol pro komunikaci mezi runtime aplikací a CNI modulem \\
+    CNI moduly jsou binární spustitelné soubory. Tyto soubory přijímají parametry formou globálních proměnných a konifguace na STDIN. Každý modul musí podporovat čtyři základní operace (\textit{ADD}, \textit{DEL}, \textit{CHECK}, \textit{VERSION}), které jsou ve standardu specifikovány.
+    \item Postup pro spouštění modulů \\
+    Pomocí zmíněného způsobu je možné, aby runtimes využívali služeb CNI modulů a tím mohli zpravovat síťování uvnitř kontejnerů. Proto, aby komunikace fungovala definuje CNI řadu pravidel pro CNI moduly a runtimes, které tyto moduly spouští. \\
+    Runtime je zodpovědný za vytváření nových síťových prostorů a korektní volání operací modulů. Runtime nesmí vola více paralelních operacecí nad jením kontejnerem. Runtime musí volat CNI v případě mazání kontejneru, na kterém byl CNI použit.
+    CNI modules musí správně pracovat s více kontejnery, v případě potřeby je zodpovědný za správné zacházení se sdílenými prostředky. 
+    \item Postup delegování práce modulů na jiné moduly
+    Pro určité potřeby dává smysl umožnit CNI modulům volat jiné moduly. Pro tyto případy je ve specifikaci popsán způsob, který unožuje CNI modulům delegovat práci i na jiné implementace modulů. Tato funkcionalita umožňuje velikou flexibilitu při vykonávání operací. Příkladem využití je modul multus, který umožňuje volat více CNI pluginů, bez nutnosti přizpůsobovat runtimes.
+    For some ocations i make sence hto have ability \footnote{\textbf{TODO}}
+    \item Datové typy pro moduly, které jsou vraceny jako výsledky CNI operace
+    Volané moduly mohou vracet jeden ze tří typů návratových dat (\textit{Success}, \textit{Error}, \textit{\_Version}). Tyto data obsahují bližší informace o výsledku volání.  
+\end{enumerate}\cite{a2023_container}
+
+Díky tomuto standardu se problematika síťování kontejnerů abstrahovala a přesunula zodpovědnost konfigurace síťování z běhových prostředí kontejnerů na modulární programy, které jsou lépe spravovatelné. Při využití CNI již běhové prostředí nemusí implementovat logiku konfigurace a mohou se spolehnout na již vytvořené obecné CNI moduly.

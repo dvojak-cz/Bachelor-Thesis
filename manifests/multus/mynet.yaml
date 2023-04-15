@@ -1,0 +1,29 @@
+---
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: mynet-conf
+spec:
+  config: |-
+    {
+      "name": "mynet",
+      "type": "macvlan",
+      "master": "enp0s9",
+      "linkInContainer":false,
+      "ipam": {
+        "type": "host-local",
+        "ranges": [
+          [
+            {
+              "subnet": "172.17.16.0/24",
+              "rangeStart": "172.17.16.10",
+              "rangeEnd": "172.17.16.50"
+            }
+          ]
+        ],
+        "routes": [
+          { "dst": "0.0.0.0/0" }
+        ],
+        "dataDir": "/run/kube-edge/ipam-state2"
+      }
+    }

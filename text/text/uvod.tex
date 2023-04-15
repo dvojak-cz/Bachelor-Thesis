@@ -1,0 +1,81 @@
+\chapter*{Úvod}\addcontentsline{toc}{chapter}{Úvod}\markboth{Introduction}{Introduction}
+\setcounter{page}{1}
+
+Orchestrační nástroj (zkráceně orchestrátor) je nástroj, který slouží pro ulehčení práce s systémy. Často se jedná o technologie složené z malých programů a modulů, které automatizují určité kroky. Ochestrátorů je velká řada z mnoha různých kategorií. Mezi nejznámější orchestrátory kontejnerových aplikací patří kubernetes. Právě tímto orchestrátorem se se tato práce zabývá. \cite{goldberg_2019_workflow}
+
+Kubernetes je orchestrační technologie, která poskytuje prostředí pro provoz aplikace na více serverech. Kubernetes tak vytváří a poskytuje jednotné prostředí pro správu aplikací. Toto prostředí se nazývá klastr. Kubernetes podporuje různé způsoby komunikací, mezi aplikacemi a službami v síti klastru, která je tvořena výpočetními uzly. Pro potřeby síťování se v kubernetes používá interní privátní virtuální síť, která je sdílena mezi všemi uzly. Tuto síť mohou využívat všechny objekty, které jsou součástí kubernetes.
+
+Pro propojení vnitřní sítě s okolním světem poskytuje kubernetes standardizovaná řešení. Tyto standardní řešení komunikace, které kubernetes nabízí jsou primárně jednostranné, spoléhají se na komunikaci s veřejnými adresami a nenabízí přímou kontrolu nad tokem dat. Pro oboustrannou komunikaci se zařízeními v privátních sítích, které se nacházejí mimo zmíněnou virtuální síť není technologie v základnu připravena. Toto je značné omezení v případě, že do clusteru je potřeba připojit reálný hardwarový prvek, který nelze přímo integrovat do sítě clusteru. Takovými prvky jsou například jednoduchá zařízení, která sbírají data, různé periferie, testovaná zařízení\ldots Obecně je lze tyto zařízení označit jako externí hardwarové prvky.
+
+Hardwarový prvek který není možné přímo přidat do sítě serverů není jednoduché k kubernetes clusteru připojit. Připojení takového zařízení je velmi náročné a pracné což je je v rozporu s hlavní myšlenkou orchestrace, která má usnadňovat práci, často formou automatizace.
+
+Tato práce se zaměřuje na možnost, jak rozšířit možnosti orchestrátoru kubernetes o možnost adresace a komunikace s hardwarovými periferiemi v privátních sítích při použití kubernetes. Zkoumaná komunikace s hardwarovými prvky bude probíhat pomocí \textit{TCP}, \textit{UDP} a \textit{HTTP} protokolů.
+
+Navrhnuté řešení by mělo být obecné a nezávislé na nestandardním nastavení kubernetes. Zároveň by nemělo nijak ovlivňovat jakékoliv funkcionality kubernetes. 
+
+\newpage
+
+\section{Motivace}
+Tato práce vnikla pro potřeby HIL\footnote{HIL (hardware in loop) je technika testování hardwarových zařízení, kde je zařízení testováno v simulovaném prostředí. Simulace prostředí nejčastěji probíhá pomocí matematických modelů, které generují signály pro dané zařízení.\cite{a2022_what}} testování v prostředí cloudu. Myšlenkou je nalézt způsob, jakým umožnit testování komunikace různých hardwarových prvků a simulací tak, aby bylo možné tyto prvky a simulace jednoduše kombinovat. Pro tyto účely je zapotřebí umožnit komunikaci mezi kubernetes a zařízeními, které nejsou připojené do internetlvé sítě. Díky integrování HIL testování do prostředí cloudu se zlepší možnosti testování. Zároveň se zjednoduší práce potřebná pro nastavování prostředí, pokud se využije stávajících orchestračních řešení.
+
+\section{Cíle práce}
+Cílem této práce je najít způsob, jakým zajistit adresaci a komunikaci s hardwarovými prvky, nacházející se mimo síť kubernetes. Zkoumána bude komunikace protokoly \textit{TCP} , \textit{UDP} a \textit{HTTP}. V případě, že nebude známo žádné řešení, které by splnilo kladené nároky, pak je za cíl návrh a implementace řešení pro výše popsaný problém.
+
+\section{Struktura práce}
+\lipsum[1]
+\section{Dohoda se čtenářem}
+V této práci se budou často vyskytovat názvy objektů z systému Kubernetes. Tyto objekty budou uvedeny s velkými počátečními písmeny. Toto je zavedená konvence proto, aby se názvy objektů nepletli se slovy běžného jazyka. Tato konvence dává dobrý smysl zejména v anglicky psané literatuře, i přesto, že tato práce je psaná v jazyce českém, bude tato konvence dodržována. Příkladem objektu může být objekt typu Deployment s velkým \'D\'.
+
+Základní pojmy, které jsou v práci použity se nachází na začátku této práce. V průběhu textu může být zaveden nový pojem, který je potřeba podrobněji vysvětlit. V případě zavedení takového pojmu bude pojem zvýrazněn odlišným písmem od okolního textu, aby byl čtenář upozorněn. Ukázkou by mohlo být například slovo \term{kernel}. Kernel (česky jádro) je část operačního systému, která přímo komunikuje s hardwarem počítače.  
+
+V případě ukázky části kódu, nebo ukázky z příkazové řádky bude využit specifický blok. Ukázkový blok kódů je uveden ve výpisu kódu. 
+
+\begin{verbatim}
+int main( void ) {
+    printf( "Hello World\n" );
+    return 0;
+}
+\end{verbatim}
+
+
+Stejným způsobem budou zobrazovány i terminálové příkazy. Pokud se příkazy provádí ve více prostředích jsou prostředí uvedena v hranatých závorkách, pokud je prostředí jednotné, bude použit symbol podtržítka. Příkazy vždy načínají symbolem "\verb|$|", výstupy konzole jsou uvedeny symbolem "\verb|>>> |". Příklad je uveden ve výpisu
+
+\begin{verbatim}
+[1]$ ip -4 --brief address show eth0        # this is environment (PC) 1
+>>> eth0        UP      192.168.124.176/24
+[2]$ ip -4 --brief address show eth0        # this is environment (PC) 2
+>>> eth1        DOWN    192.168.124.177/24
+\end{verbatim}
+
+
+Příkazy z těchto bloků jsou převeditelné na script pomocí následujícího příkazu 
+\begin{verbatim}
+[_]$ sed 's /^\[[[:digit:]_]\]\$// ; /^>>>/ d' blok.sh | tee script.sh
+\end{verbatim}
+
+\section{Prostředí a použité verze softwaru}
+Veškeré příklady jsou prováděny ve virtuálním stroji na systému \term{centos/7}. Virtuální prostředí lze spustit pomocí služby \term{vagarnt}. V případě, potřeby lze virtuální prostředí nastavit pomocí následujících příkazů.
+\begin{verbatim}
+[1]$ cat > Vagrantfile <<EOF
+Vagrant.configure("2") do |config|
+  config.vm.box = "centos/7"
+end
+EOF
+[1]$ vagrant up
+[1]$ vagrant ssh
+[2]$ hostnamectl
+>>>   Static hostname: localhost.localdomain
+>>>         Icon name: computer-vm
+>>>           Chassis: vm
+>>>        Machine ID: d1a6b9d5e7f4af49b5c53c99d86d520b
+>>>           Boot ID: 077a2c59fd4545889bb1566fd23d5c58
+>>>    Virtualization: kvm
+>>>  Operating System: CentOS Linux 7 (Core)
+>>>       CPE OS Name: cpe:/o:centos:centos:7
+>>>            Kernel: Linux 3.10.0-1127.el7.x86_64
+>>>      Architecture: x86-64
+\end{verbatim}
+
+Pro správné použití je potřeba mít nainstalovaný vagrant a libovolný podporovaný virtualizační nástroj (hypervisor).
+
+Veškeré informace v této práci budou platné pro kubernetes verze \verb|1.26.0|

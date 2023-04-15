@@ -1,0 +1,112 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxy-to-device
+spec:
+  selector:
+    matchLabels:
+      app: proxy-to-device
+  template:
+    metadata:
+      labels:
+        app: proxy-to-device
+      annotations:
+        k8s.v1.cni.cncf.io/networks: bridge-conf
+    spec:
+      nodeSelector:
+        edge: "true"
+      tolerations:
+        - operator: Exists
+          effect: NoSchedule
+        - operator: Exists
+          effect: NoExecute
+      containers:
+        - name: proxy-tcp
+          image: alpine/socat
+          args: [ "-ddd", "-lh", "-lp", "name", "tcp4-listen:8080,fork", "tcp4-connect:172.17.16.120:8080" ]
+          ports:
+            - containerPort: 8080
+              name: proxy-tcp
+              protocol: TCP
+        - name: proxy-udp
+          image: alpine/socat
+          args: [ "-ddd","-T" ,"5" ,  "-lh", "-lp", "name", "udp-listen:9090,fork", "udp4-connect:172.17.16.120:9090" ]
+          ports:
+            - containerPort: 9090
+              name: proxy-udp
+              protocol: UDP
+        - name: proxy-http
+          image: alpine/socat
+          args: [ "-ddd", "-lh", "-lp", "name", "tcp4-listen:8000,fork", "tcp4-connect:172.17.16.120:8000" ]
+          ports:
+            - containerPort: 8000
+              name: proxy-http
+              protocol: TCP
+        - name: debug
+          image: nicolaka/netshoot:latest
+          command: ["tail"]
+          args: ["/dev/random"]
+          imagePullPolicy: Always
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proxy
+spec:
+  selector:
+    app: proxy-to-device
+  type: ClusterIP
+  ports:
+    - name: proxy-tcp
+      protocol: TCP
+      port: 8080
+      targetPort: proxy-tcp
+    - name: proxy-udp
+      protocol: UDP
+      port: 9090
+      targetPort: proxy-udp
+    - name: proxy-http
+      protocol: TCP
+      port: 8000
+      targetPort: proxy-http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxy-to-cluster
+spec:
+  selector:
+    matchLabels:
+      app: proxy-to-cluster
+  template:
+    metadata:
+      labels:
+        app: proxy-to-cluster
+      annotations:
+        k8s.v1.cni.cncf.io/networks: bridge-conf
+    spec:
+      nodeSelector:
+        edge: "true"
+      tolerations:
+        - operator: Exists
+          effect: NoSchedule
+        - operator: Exists
+          effect: NoExecute
+      containers:
+        - name: proxy-tcp
+          image: alpine/socat
+          args: [ "-ddd", "-lh", "-lp", "name", "tcp4-listen:8888,fork", "tcp4-connect:tcp-server:8080" ]
+        - name: proxy-udp
+          image: alpine/socat
+          args: [ "-ddd", "-lh", "-lp", "name", "udp-listen:9999,fork,reuseaddr", "udp4-connect:udp-server:9090" ]
+        - name: proxy-http
+          image: alpine/socat
+          args: [ "-ddd", "-lh", "-lp", "name", "tcp4-listen:8800,fork", "tcp4-connect:http-server:80" ]
+        - name: debug
+          image: nicolaka/netshoot:latest
+          command: ["tail"]
+          args: ["/dev/random"]
+          imagePullPolicy: Always
+      restartPolicy: Always

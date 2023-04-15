@@ -1,0 +1,82 @@
+\section{Kubernetes}
+
+Kontejnerizace velmi ovlivnila způsob doručování a nasazování aplikací. Myšlenka kontejnerů a OCI vytvořili jednoduchý prostředek, díky kterému mohou lépe vývojáři aplikací a administrátoři komunikovat. Pro administrátory to velmi standardizovalo správu a nasazování aplikací na servery. Pro ulehčení práce administrátorům dává smysl zajímat se o orchestarci těchto kontejnerů. 
+
+Orchestrace je proces, který zahrnuje automatickou konfiguraci, správu a koordinaci počítačových systémů. Cílem orchestrace je zjednodušit správu a práci s komplexními informačními systémy, které se typicky skládají z více komponent (částí).\cite{a2019_what} Orchestrace často využívá automatizace k dosažení zjednodušení.
+
+Automatizace má za cíl eliminovat lidskou práci spjatou s provedením úkonu. Jedná se o nastavení daného úkolu tak, aby se prováděl automaticky, bez nutnosti lidského zásahu. Příkladem automatizace je automatické odesílání reklamních emailů, proces obnovení zapomenutého hesla bez zásahu administrátora, a mnoho dalších.\cite{watts_2020_it}\cite{a2019_what}. Automatizace a Orchestrace není to samé a proto je důležité tyto dva pojmi rozdělovat. 
+
+Orchestrace se využívá v mnoha oblastech informatiky. Mezi nejčastější oblasti, kde se orchestrace využívá patří správa cloudu a infrastruktury, správa služeb a průběhu jejich nasazování, administrace serverů a jiných zařízení. K orchestraci se využívají takzvané orchestrální nástroje. Orchestrační nástroj (zkráceně orchestrátor) je nástroj, který obsahuje prostředky pro ulehčení práce s systémy. Často se jedná o technologie složené z malých programů a modulů, které automatizují určité kroky. Ochestrátorů je velká řada. Mezi nejznámější z nich patří kubernetes. \cite{goldberg_2019_workflow}
+
+Kubernetes je orchestrační nástroj, který umožňuje snadnější práci a administraci s kontejnery. Kubernetes vznikl jako nástroj pro správu aplikací ve společnosti google. Z počátku byl vyvíjen jako interní nástroj pro googlu. V roce 2014 ho googl daroval nadaci \textit{Cloud Native Conputing Foundation}.\cite{poulton_2022_the}. Od roku 2014 se tal kubernetes velmi populární technologií. Dnes je nadšenci poznačován i za operační systém cloudu\footnote{Takto ho označuje - popularizátor kontejnerizace a kubernetes}. 
+
+Technologie kubernetes poskytuje vrstvu abstrakce nad cloudem. Díky této vrstvě lze jednoduše abstrahovat privátní i hostované cloudové služby. Díky této abstrakci je dobře odděleno prostředí pro nasazovaní a správu aplikací od samotných serverů, na kterých kubernetes operuje. Kubernetes pak poskytuje jednotné rozhraní, jak deklarativním způsobem spravovat aplikace. Právě toto jednotné rozhraní je považováno za velký důvod, proč se stala tato technologie populární.\cite{darinpope_2019_devops}
+
+\subsection{Základy systému kubernetes}
+
+Jak již bylo zmíněno, kubernetes je orchestrační nástroj pro správu a nasazování aplikací. Pro základní pochopení orchestrátorů je dobré vědět, jakým způsobem orchestrátor pracuje. Díky tomu je možné pochopit možnosti a limity technologie.
+
+Kubernetes typicky operuje na více serverech , ze kterých tvoří takzvaný klastr. Klastr nejčastěji označuje množinu počítačů, které spolu spolupracují. Pro účely této práce budeme klastr chápat jako množinu serverů, které jsou součástí kubernetes.
+
+Kubernetes se skládá z více mikroservisních modulů, které společně tvoří samotnou technologii. Tyto moduly je možné rozdělit do tří základních kategorií. První kategorií jsou moduly tvořící takzvaný \term{control plane}(CP, dříve také označovaný jako master node). Druhou kategorií jsou moduly, které tvoří \term{worker node}(WN, česky pracovní uzel).
+
+Množina modulů control plane je jádrem kubernetes klastru. Základním úkolem této množiny je správa pracovních uzlů a Podů(pojem bude vysvětlen později) v klastru. \cite{the-kubernetes-authors_2022}\cite{a2022_kubernetes} Tato množina obsahuje pět základních prvků.
+\begin{itemize}
+    \item \term{etcd}\\
+    Etcd je distribuovaná no-SQL databáze, která uchovává data  ve formě klíč-hodnota. Tato databáze je jediným prvkem kubernetes, který uchovává stálá data o klastru. Případná ztráta dat v této databázi vede k znefunkčnění celého systému
+    \item API Server\\
+    API server je komponenta, která vystavuje rozhraní pro komunikaci s kastrem. API Server je označován jako front-end pro control plane. Komunikace s vystavovaným API probíhá za pomocí protokolu HTTP a REST architektury. 
+    \item Plánovač\\
+    Plánovač, jak už název napovídá, slouží k plánovaní úloh v klastru. Jeho úkolem je pozorovat etcd databázi a reagovat na případné změny. V případě potřeby má za úkol vyřešit požadavek tím, že naplánuje jeho provedení a deleguje naplánovanou práci na jinou komponentu kubernetes.  
+    \item Správce controllerů\\
+    Správce kontroleru spravuje programy, které se označují jako controlery. Tyto programy jsou zodpovědné za většinu práce v klastru. Příkladem zodpovědnosti kontroleru může být kontrola stavu serverů (v případě node controler), nebo správa jednotlivých objektů(né komponent) kubernetes. 
+    \item Správce klaudu\\
+    Poslední komponentou je správce klaudu. Jedná se o komponentu, která provádí komunikaci s API rozhraním poskytovatelů klaudu, jako například AWS a Azure. 
+\end{itemize}
+Zmíněné moduly tvoří jádro systému kubernetes. Tyto moduly mohou běžet na jednom, nebo více serverech, které kubernetes spravuje.
+
+Druhá kategorie, modulů spravuje samostatné Pody abstrahující kontejnery. Tyto moduly tvoří worker nodes. Kontejnery spravované těmito moduly představují samostatné procesy, které uvnitř kubernetesu běží. Dá se říct, že tvoří pracovní sílu klastru - z tohoto plyne název pracobní uzly. Příkladem těchto konttejerů můžou být kontejnery, ve kterých běží samotné moduly (kontrol pane i worker nodes).
+Worker nodes se skládá z následujících modulů:
+\begin{itemize}
+    \item kubelet\\
+    Kubelet je deamon, který běží na každém serveru v klastru. Úkolem tohoto démona je komunikovat s kube-api-serverem, zároveň spravuje kontejnery a Pody, které běží přímo na daném serveru. 
+    \item kube-proxy\\
+    Kube-proxy je modul, který běží na každém uzlu klastru a nastavuje síťování pro daný uzel. Kubernetes dodává výchozí implementaci tohoto modulu, zároveň ale umožňuje delegovat práci na program jinou implementaci, kterou administrátor zvolí. 
+    \item container runtime\\
+    Poslední komponentou, která je přítomná na každém stroji je container runtime. Container runtime musí být nainstalovaný na každém a splňovat runtime specifikaci OCI. V současné době kubernetes doporučuje jeden z následujících runtimes: \textit{containerd}, \textit{CRI-O}, \textit{Docker Engine}, \textit{Mirantis Container Runtime} \cite{a2023_container} 
+\end{itemize}
+
+Díky výše popsaným komponentám lze dobře pochopit fungování kubernetes. Z předchozích kapitol je zřejmé, že kubernetes slouží pro orchestraci kontejnerů na více počítačích. Následující odstavec popíše, jakým způsobem jsou tyto kontejnery nasazovány.
+
+Nasazení Podu (kontejneru - pro tento účel lze  chápat jako nasazení kontejneru) zažíná tím, že \textit{kube-api} dostane požadavek na jeho vytvoření. V tuto chvíli \textit{kube-api} zaznamená požadavek do \textit{etcd} databáze. V databázi se momentálně nachází informace o Podu, tato informace je chápána jako očekávaný stav klastru. Nyní přichází na řadu jeden z kontrolerů, konrétně \textit{pod-controller}. Tento kontroller má za úkol pozorovat změny databázi a aktuální stav klastru. Jeho úkolem je porovnávat požadovaný stav Podů, který je uložen v databázi, a stav klastru. V případě, že očekávaný stav klastru se neshoduje s reálným stavem klastru, jeho úkol je pokusit se stav klastru napravit. V našem případě se jedná o vytvoření nového Podu. V tuto chvíli požádá \textit{pod-controller} modul \textit{pod-scheduler}, aby vybrala nejhodnějšího kandidáta (z množiny serverů klastru) pro nasazení daného Podu. Jakmile je kandidát vybrán, dostane se informace o vytvoření Podu do příslušného \textit{kubelet} démona, který Pod vytvoří. Všechny změny a akce jsou v průběhu zapsány do \textit{etcd} databáze.  
+
+Díky výše popsáným mechanizmům a modulům kubernetes, tvoří kubernetes opravdu mocný orchestrátor aplikaci. Mezi hlavní služby, které kubernetes nabízí patří například: Nasazování aplikací, Škálování aplikací do šířky, Automatické opravování nasazených aplikací, Bez výpadková aktualizace aplikací bežících v kubernetes, Vysoká automatizace procesů pro administraci aplikací a mnoho dalších.\cite{poulton_2022_the}
+
+\subsection{Pod}
+
+Již několikrát byl zmíněn pojem \term{Pod}. Proto by bylo vhodné vysvětlit o co se jedná.
+
+Pod je základním objektem kubernetes. Jedná se o určitou abstrakci kontejneru, se kterou kubernetes pracuje. Zároveň se jedná o atomický objekt, který lze v  kubernetes plánovat. 
+
+Pod je často chápán, jako kontejner, který obsahuje další kontejnery. Pro jednoduché porozumění problematiky je toto vysvětlení dostačující, i přesto, že není sto procentně pravdivé.
+
+Stejně jako kontejnery jsou i Pody implementovány pomocí jmenných prostorů procesu.\footnote{jmenné prostory nejsou jediným nástrojem pro tvoření kontejnerů a Podů v linuxovém prostředí, mezi další patří Cgroups, Seccomp\ldots} Pod je prostředí formované jemnými prostory, ve kterých je možné spouštět dané kontejnery. Při vzniku Podu se vytváří tři jmenné prostory procesů, které jsou sdílené se všemi kontejnery v Podu. Konkrétně se jedná o \term{jmenný prostor mezi-procesové komunikace (IPC namespace)}, \term{jmenný prostor názvu a domény systému (UTS namespace)} a \term{síťový jmenný prostor (net namespace)}. Všechny zmíněné prostory jsou sdílené napříč kontejnery v podu. Jednotlivé kontejnery pak už jsou izolovaný pouze \term{pid namespace}
+a \term{jmenný prostor přístupových bodů (mnt namespace)}. Problematika je výborně ilustrována na schématu \ref{img:podSchema} od Ivan Velichko.
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.9\textwidth]{images/podSchema.png}
+\caption{~Schéma jmenných prostorů v podu}\label{img:podSchema}
+\end{figure}
+
+Mezi hlavní vlastnosti podu patří nestálost (často popisováno anglickým slovem \textit{emhemeral}) a neměnnost (anglicky \term{imutabililta}). Nestálost v kontextu podu značí nestálost v případě zániku podu (v anglické literatuře se občas pod označuje za smrtelný (\term{mortable})). V případě zániku podu v kubernetes se veškeré informace a data spjaté s daným podem ztratí. Proto není dobré se jakýmkoliv způsobem spoléhat na data spjatá s podem, jelikož o ně můžeme snadno přijít. Druhou klíčovou vlastností je zmíněn neměnnost. Tato vlastnost znamená, že již běžící objekt pod nelze jakýmkoliv způsobem měnit. V případě potřeby změny je vytvořen pod nový a starý smazán.\cite{poulton_2022_the}
+
+Z výše popsaných vlastností lze odvodit i další. Zde jsou příklady těch, které jsou důležité pro účely práce: Každý pod má vlastní nepředvídatelnou IPadresu, pokud pod zemře a na-místo něj vznikne nový, nelze nová IP adresa předvídat. V případě zániku podu se ztrácí veškerá data v něm uložená. Při vzniku podu předpovědět na jaký server bude pod naplánován (pokud není explicitně uvedeno). 
+
+\subsection{Deployment}
+Deployment je další objekt kubernetes, který slouží převážně pro nasazování takzvaných bezstavových aplikací, které následně běží v podech. Bezstavové aplikace jsou aplikace, které nemají žádný vnitřní stav a neukládají žádná perzistentní data. Často se jedná o různé jednoduché webové API, webové frontendy... Typické pro tyto aplikacích je, že jsou nezávisle na předchozích a budoucích požadavcích. Díky tomu je možné provozovat více takových aplikací paralelně, kde si aplikace jednotlivé operace rozdělí mezi sebe. Díky tomu jsou velmi snadno vertikálně škálovatelné. Právě pro potřeby provozování těchto aplikací je určený objekt Deployment.
+
+Deployment je objekt, který zaobaluje již popsaný objekt Pod. V základu dreployment určuje dvě věci. První z věcí, které specifikuje je šablona pro pod. Tato šablona slouží pro popis podu, který náleží danému deploymentu. Deplyment zároveň specifikuje jakým způsobem se má s pody zacházet. Tento popis obsahuje informaci o počtu podů. které mají v jedem okamžik běžet, jakým způsobem provádět aktualizace podů\ldots
+
+Pro tento objekt zároveň existuje vlastní kontroler, který se stará o veškeré deploymenty v klastru. Kontroluje, zda vše běží tak jak má a zda jsou dodržena veškerá pravidla nastavená daným deploymentme. V případě potřeby (například vytvoření nového podu) se pokusí o nápravu.
+
+Deplyment umožňuje kontrolu podů pro nestavové aplikace.

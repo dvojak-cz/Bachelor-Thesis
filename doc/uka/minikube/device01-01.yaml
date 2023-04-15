@@ -1,0 +1,36 @@
+---
+apiVersion: edge-operator.k8s.dvojak.cz/v1
+kind: Device
+metadata:
+  name: device01-01
+spec:
+  nodeName: minikube
+  up: true
+  ipAddress: 192.168.100.2
+  components:
+    - name: udp-tcp
+      up: true
+      handlers:
+        - name: tcp
+          protocol: TCP
+          port: 8080
+        - name: udp
+          protocol: UDP
+          port: 9090
+    - name: http
+      up: true
+      handlers:
+        - name: http
+          protocol: HTTP
+          port: 8000
+---
+apiVersion: edge-operator.k8s.dvojak.cz/v1
+kind: Connection
+metadata:
+  name: test
+spec:
+  deviceName: device01-01
+  networkName: bridge
+  componentNames:
+    - udp-tcp
+    - http

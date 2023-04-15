@@ -1,0 +1,66 @@
+name: Deloy doc | gp-pages
+
+env:
+  GH_REPO_URL: https://github.com/dvojak-cz/Bachelor-Thesis
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - doc/**
+  workflow_dispatch:
+
+
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest 
+    steps:
+      - name: clone
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+      - run: mkdir public
+      - name: Build Index
+        uses: jaywcjlove/markdown-to-html-cli@main
+        with:
+          source: doc/README.md
+          output: public/index.html
+          github-corners: ${{env.GH_REPO_URL}}
+      - name: Build ab-set-up
+        uses: jaywcjlove/markdown-to-html-cli@main
+        with:
+          source: doc/lab-set-up.md
+          output: public/lab-set-up.html
+          github-corners: ${{env.GH_REPO_URL}}
+      - name: Build operator-configuration
+        uses: jaywcjlove/markdown-to-html-cli@main
+        with:
+          source: doc/operator-configuration.md
+          output: public/operator-configuration.html
+          github-corners: ${{env.GH_REPO_URL}}
+      - name: Build operator-install
+        uses: jaywcjlove/markdown-to-html-cli@main
+        with:
+          source: doc/operator-install.md
+          output: public/operator-install.html
+          github-corners: ${{env.GH_REPO_URL}}
+      - name: Build sample
+        uses: jaywcjlove/markdown-to-html-cli@main
+        with:
+          source: doc/sample.md
+          output: public/sample.html
+          github-corners: ${{env.GH_REPO_URL}}
+      - name: Repair links
+        run: |
+          sed -i 's/\.md/\.html/g' public/*.html
+      - uses: actions/upload-pages-artifact@v1
+        with:
+          path: public
+      - uses: actions/deploy-pages@v1
