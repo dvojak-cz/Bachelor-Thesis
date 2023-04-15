@@ -46,11 +46,11 @@ Pro komunikaci mezi jmennými prostory je vytvořen pár virtuálních rozhraní
 \item Vložení jednoho rozhraní \verb|veth| do síťového jmenného prostoru \\
 V tomto kroku se vloží jeden z konců páru do vytvořeného jmenného prostoru. 
 \item Připojení druhého konce \verb|veth| páru do vytvořeného bridge rozhraní \\
-Nyní se jeden z virtuálních páru připojí do bridge. V tuto chvíli je vytvořena cesta mezi rozhraní uvnitř kontejneru a vytvořeným bridgem. Pokud by se v systému nacházely další kontejnery se sítí nastavenou stejně stejným, pak by byly tyto kontejnery propojeny mezi sebou právě pomocí tohoto bridge rozhraní.
+Nyní se jeden z virtuálních páru připojí do bridge. V tuto chvíli je vytvořena cesta mezi rozhraní uvnitř kontejneru a vytvořeným bridgem. Pokud by se v systému nacházely další kontejnery se sítí nastavenou stejně způsobem, pak by byly tyto kontejnery propojeny mezi sebou právě pomocí tohoto bridge rozhraní.
 \item Přidělení IP adres pro bridge a \verb|veth| uvnitř jmenného prostoru \\
 Nyní se v kontejneru nakonfiguruje rozhraní. Součástí konfigurace je přidělení IP adresy, masky\ldots  
-\item Zapnutí potřebných rozhraní \\
-\item Nastavit NAT a IP Masquerade v hostujícím jmenného prostoru \\
+\item Zapnutí potřebných rozhraní\\
+\item Nastavit NAT a IP Masquerade v hostujícím jmenného prostoru\\
 Proto aby bylo možné se z rozhraní bridge propojit na okolní síť, je na hostujícím systému nastavena NAT a IP Masquerade. Toto je prováděno pomocí prostředků kernelu, konfigurace je prováděna na úrovni iptables a přeposílání paketů.
 \end{enumerate}
 Zmíněné kroky lze provést následujícími příkazy.
