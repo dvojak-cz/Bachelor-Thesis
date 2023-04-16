@@ -49,6 +49,7 @@ jobs:
         run: |
           sed -Ei "s|newName:.*|newName: ${{env.OPERATOR_IMAGE_NAME}}|" EdgeOperator/config/install/kustomization.yaml
       - name: Upload config artefact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v3
         with:
           name: ${{env.CONFIG_ARTEF_NAME}}
@@ -56,6 +57,7 @@ jobs:
           if-no-files-found: error
 
   build_and_push_docker:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     needs: test
     defaults:
