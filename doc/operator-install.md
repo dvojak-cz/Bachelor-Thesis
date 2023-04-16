@@ -30,7 +30,7 @@ To install the operator download latest release files config. This archive conta
 
 Manifests files require PKI certificates, keys... You can generate them using cfssl.
 
-Before installing operator make sure that there are no *validatingwebhookconfigurations* and *mutatingwebhookconfiguration* installed on the cluster. Those objects might collide with those that operator uses - that could affect the run of operator.
+Before installing operator make sure that there are no *ValidatingWebhookConfigurations* and *MutatingWebhookConfiguration* installed on the cluster. Those objects might collide with those that operator uses - that could affect the run of operator.
 ```bash
 # Download latest version of operator
 wget https://github.com/dvojak-cz/Bachelor-Thesis/releases/latest/download/config.tar.gz
@@ -60,9 +60,9 @@ cfssl gencert -initca csr.json | cfssljson -bare ca -
 cd ..
 
 # Remove all validating-webhook-configurations
-kubectl delete validatingwebhookconfigurations --all
+kubectl delete ValidatingWebhookConfigurations --all
 # Remove mutating-webhook-configuration
-kubectl delete mutatingwebhookconfiguration --all
+kubectl delete MutatingWebhookConfiguration --all
 
 # Install operator
 kubectl apply -k install/
