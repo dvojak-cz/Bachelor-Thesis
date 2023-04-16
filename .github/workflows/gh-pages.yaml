@@ -7,6 +7,9 @@ on:
   push:
     branches: ["master"]
     paths: ["doc/**"]
+  pull_request:
+    branches: ["master"]
+    paths: ["doc/**"]
   workflow_dispatch:
 
 
@@ -59,6 +62,7 @@ jobs:
         run: |
           sed -i 's/\.md/\.html/g' public/*.html
       - uses: actions/upload-pages-artifact@v1
+        if: github.event_name != 'pull_request'
         with:
           path: public
       - uses: actions/deploy-pages@v1

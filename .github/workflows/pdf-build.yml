@@ -9,6 +9,9 @@ on:
   push:
     branches: ["master", "text", "ci"]
     paths: ["text/**"]
+  pull_request:
+    branches: ["master", "text", "ci"]
+    paths: ["text/**"]
   workflow_call:
     outputs:
       ARTEFACT_NAME:
