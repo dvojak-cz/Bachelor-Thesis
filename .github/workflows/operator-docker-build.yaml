@@ -8,6 +8,9 @@ on:
   push:
     branches: ["master", "ci"]
     paths: ["code/EdgeOperator/**"]
+  pull_request:
+    branches: ["master", "ci"]
+    paths: ["code/EdgeOperator/**"]
   workflow_call:
     outputs:
       ARTEFACT_NAME:
