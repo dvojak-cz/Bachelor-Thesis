@@ -16,16 +16,25 @@ go install github.com/mikefarah/yq/v4@v4.33.2
 ### Configuration
 Operator is highly configurable, for more information see [OperatorConfiguration](operator-configuration.md) page.
 
----
+
+## Guide
+Before installing make sure that you have installed [*multus CNI*](https://github.com/k8snetworkplumbingwg/multus-cni) plugin. Also apply taints for edge nodes.
 ### 1. Install multus CNI plugin and setup taints for edgeNone
 ```bash
 kubectl apply -f manifests/operator/
 ```
 
 ### 2. Install operator
+To install the operator download latest release files config. This archive contains manifests for installing the operator.
+
+Manifests files require PKI certificates, keys... You can generate them using cfssl.
+
+Before installing operator make sure that there are no *validatingwebhookconfigurations* and *mutatingWebhookconfiguration* installed on the cluster. Those objects might collide with those that operator uses - that could affect the run of operator.
 ```bash
 # Download latest version of operator
 wget https://github.com/dvojak-cz/Bachelor-Thesis/releases/latest/download/config.tar.gz
+#wget https://github.com/dvojak-cz/Bachelor-Thesis/releases/download/v0.0.1/config.tar.gz
+
 tar -xf config.tar.gz
 cd config/operator
 
@@ -45,14 +54,24 @@ cat > csr.json <<EOF
   ]
 }
 EOF
-
 cfssl gencert -initca csr.json | cfssljson -bare ca -   # Generate self-signed certificate
 cd ..
 
 kubectl delete validatingwebhookconfigurations --all
 kubectl delete mutatingWebhookconfiguration --all
 
-
-
 kubectl apply -k install/                               # Deploy operator
 ```
+
+### Test
+To verify, that installation has been successful, make sure that everything in `edgeoperator-system` namespace works fine
+```bash
+edgeoperator-system
+```
+
+---
+## Links
+1. [**BACK** - Lab setup](lab-set-up.md)
+
+1. [**NEXT** - Usage Example](example.md)
+1. [**HOME**](README.md)

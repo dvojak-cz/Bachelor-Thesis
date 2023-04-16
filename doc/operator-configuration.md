@@ -6,4 +6,8 @@ Edge-operator is configurable by environment variables, command line arguments, 
 - `Validator__DeviceStrict`: ['false', 'true']
 - `Validator__ConnectionStrict`: ['false', 'true']
 
-For more information you can see default configuration file [appsetings.json](https://github.com/dvojak-cz/Bachelor-Thesis/blob/master/code/EdgeOperator/EdgeOperator/appsettings.json)
+For more information you can see default configuration file [appsetings.json](https://github.com/dvojak-cz/Edge-Operator/blob/master/EdgeOperator/appsettings.json)
+
+---
+## Links
+1. [**HOME**](README.md)
