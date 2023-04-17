@@ -1,4 +1,4 @@
-# Device kind
+# Connection kind
 Edge operator works with two *CRD*, one of the is `Connection`, this resource is part of `edge-operator.k8s.dvojak.cz` group.
 ```yaml
 apiVersion: edge-operator.k8s.dvojak.cz/v1
