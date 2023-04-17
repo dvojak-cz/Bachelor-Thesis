@@ -115,6 +115,6 @@ In case you see list of nodes which are in state `Ready`, you have successfully 
 
 ---
 ## Links
-2. [**NEXT** - Operator Install](operator-install.md)
-
+1. ~~**BACK**~~
+1. [**NEXT** - Operator Install](operator-install.md)
 1. [**HOME**](README.md)

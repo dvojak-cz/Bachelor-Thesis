@@ -90,3 +90,9 @@ If all checks pass, device will be created. If any of checks fail. API will retu
 API will accept device definition and report validation only as a waring.
 
 > To setup validator see [Operator Configuration](operator-configuration.md)
+
+---
+## Links
+1. ~~**BACK**~~
+1. ~~**NEXT**~~
+1. [**HOME**](README.md)

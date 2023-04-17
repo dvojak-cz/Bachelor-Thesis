@@ -42,8 +42,7 @@ spec:
 - `.spec.deviceName` \<string\> --required--
     - name of the Device to connect to
 - `.spec.networkName` \<string\> --required--
-    - name of the [`NetworkAttachmentDefinition`](https://github.com/k8snetworkplumbingwg/multus-cni/blob/
-    master/docs/how-to-use.md) to use for the connection
+    - name of the [`NetworkAttachmentDefinition`](https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/how-to-use.md) to use for the connection
 - `.spec.componentNames` \<list[string]\> --required--
     - names of the Components (of device) to connect to
 
@@ -64,3 +63,9 @@ If all checks pass, connection will be created. If any of checks fail. API will 
 API will accept connection definition and report validation only as a waring.
 
 > To setup validator see [Operator Configuration](operator-configuration.md)
+
+---
+## Links
+1. ~~**BACK**~~
+1. ~~**NEXT**~~
+1. [**HOME**](README.md)

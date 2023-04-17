@@ -10,4 +10,6 @@ For more information you can see default configuration file [appsetings.json](ht
 
 ---
 ## Links
+1. ~~**BACK**~~
+1. ~~**NEXT**~~
 1. [**HOME**](README.md)

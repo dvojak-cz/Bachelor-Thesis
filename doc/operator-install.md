@@ -81,6 +81,5 @@ You should be able to see four kubernetes resources [`pod`, `deployment`, `servi
 ---
 ## Links
 1. [**BACK** - Lab setup](lab-set-up.md)
-
-1. [**NEXT** - Usage Example](example.md)
+1. [**NEXT** - Usage](example.md)
 1. [**HOME**](README.md)
