@@ -7,3 +7,5 @@
 ---
 
 - [Operator Configuration](operator-configuration.md)
+- [`Device`](device.md)
+- [`Connection`](connection.md)
