@@ -52,11 +52,23 @@ jobs:
           source: doc/operator-install.md
           output: public/operator-install.html
           github-corners: ${{env.GH_REPO_URL}}
-      - name: Build sample
+      - name: Build exmaple
         uses: jaywcjlove/markdown-to-html-cli@main
         with:
-          source: doc/sample.md
-          output: public/sample.html
+          source: doc/example.md
+          output: public/example.html
+          github-corners: ${{env.GH_REPO_URL}}
+      - name: Build device
+        uses: jaywcjlove/markdown-to-html-cli@main
+        with:
+          source: doc/device.md
+          output: public/device.html
+          github-corners: ${{env.GH_REPO_URL}}
+      - name: Build connection
+        uses: jaywcjlove/markdown-to-html-cli@main
+        with:
+          source: doc/connection.md
+          output: public/connection.html
           github-corners: ${{env.GH_REPO_URL}}
       - name: Repair links
         run: |
