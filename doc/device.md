@@ -80,7 +80,7 @@ API is checking for folowing validations.
 1. Check IP address is valid
 1. Check node exists
     1. Check if node has required labels
-1. Check if all components, that are listed, are up up
+1. Check if all components, that are listed, are up
 2. Check if device has unique names for *TCP* and *UDP*
 
 **With strict mode enabled (default)**\
