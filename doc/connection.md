@@ -53,7 +53,7 @@ API is checking for folowing validations.
 1. Check if device exists
     1. Check if device is up
     1. Check if device contains all components that are listed in `.spec.componentNames`
-    1. Check if all components, that are listed, are up up
+    1. Check if all components, that are listed, are up
 2. Check if `NAD` (`.spec.networkName`) exists
 
 **With strict mode enabled (default)**\
