@@ -1,8 +1,8 @@
 # Lab setup
-At the end of this guide you should have up end running kubernetes cluster for demo purposes
+At the end of this guide you should have up end running kubernetes cluster for demo purposes.
 
 This guide helps you with setting up lab for demo.
-Guide was tested using: `virtualbox-6.1`, `vagrant-2.3.4`, `debian-11`
+Guide was tested using: `virtualbox-6.1`, `vagrant-2.3.4`, `debian-11`.
 
 ## Requirements
 - [virtualbox](https://www.virtualbox.org/) (or other compatible VMM)
@@ -16,30 +16,37 @@ Guide was tested using: `virtualbox-6.1`, `vagrant-2.3.4`, `debian-11`
 In case you are using virtualbox, make sure you have enabled the creation of the necessary ip ranges
 
 ```bash
-echo '* 0.0.0.0/0 ::/0' | sudo tee -a /etc/vbox/networks.conf   # allow full range of IPv4 for VMs
+# allow full range of IPv4 for VMs
+echo '* 0.0.0.0/0 ::/0' | sudo tee -a /etc/vbox/networks.conf
 ```
 Install required ansible packages
 ```bash
-ansible-galaxy install -r ansible/requirements.yaml             # install ansible requirements
+# install ansible requirements
+ansible-galaxy install -r ansible/requirements.yaml
 ```
 Add all public SSH keys, that you want to import to VMs,  to `vagrant/.ssh_public_keys`. If you don't want to add any, leave the file empty.
 ```bash
-cat ~/.ssh/id_rsa.pub >> ./vagrant/.ssh_public_keys             # set list of public keys to import
+# set list of public keys to import
+cat ~/.ssh/id_rsa.pub >> ./vagrant/.ssh_public_keys
 ```
 
 ### 1. Create VMs
-Use vagrant to create all VMs. If you want to add or remove any machine, fell fre to customize `vagrant/Vagrantfile`
+Use vagrant to create all VMs.
 ```bash
 cd vagrant
-vagrant up  # create and run VMs
+# create and run VMs
+vagrant up
 ```
+If you want to add or remove any machine, fell fre to customize `vagrant/Vagrantfile`
 
 ### 2. Setup VMs
 Install and configure VMs. You can use provided playbooks from `ansible/playbook`.
 ```bash
 cd ansible
-ansible-playbook playbook/infra.yaml -i inventory/inv   # setup cluster nodes
-ansible-playbook playbook/device.yaml -i inventory/inv  # setup demo on devices
+# setup cluster nodes
+ansible-playbook playbook/infra.yaml -i inventory/inv
+# setup demo on devices
+ansible-playbook playbook/device.yaml -i inventory/inv
 ```
 
 ### 3. Set up k8s
@@ -50,8 +57,11 @@ Feel free to add custom IP and DNS names to `apiserver-cert-extra-sans` paramete
 Make sure that `/etc/kubernetes/admin.conf` file located on `kmaster` is readable by user *kube*.
 ```bash
 cd vagrant
+# log into kmaster
 vagrant ssh kmaster
 sudo su - kube
+
+# pull container images for k8s
 sudo kubeadm config images pull
 # create kubernetes cluster
 # set kubernetes API endpoint
@@ -62,36 +72,49 @@ sudo kubeadm init \
     --apiserver-cert-extra-sans=bt,10.38.6.86 \
     --pod-network-cidr=10.244.0.0/16 \
     | tee -a ~/kubeinit.log
-sudo kubeadm token create --print-join-command \
-    | tee ~/joincluster.sh                          # store connection string !DON'T USE FOR PRODUCTION!
+# store connection string !DON'T USE FOR PRODUCTION!
+sudo kubeadm token create --print-join-command | tee ~/joincluster.sh
+# set up credentials for kubelet
 ln -s /etc/kubernetes/admin.conf ~/.kube/config
 exit
+
 sudo chmod +r /etc/kubernetes/admin.conf
 exit
-../scripts/joinClusterWithNodes.sh                  # add other nodes to cluster
+```
+
+```bash
+# add other nodes to cluster
+scripts/joinClusterWithNodes.sh
 ```
 
 ### 4. Set up local env
-Flowing script will add credentials for kubectl. Feel free to edit cluster name. You can pass new name as an first (`$1`) argument to script. Example uses *bt_trojaj12* as a name for the cluster.
+Flowing script will add credentials for kubectl.
 ```bash
 cd vagrant
-../scripts/locaKubectl.sh bt_trojaj12               # update your kubectl config for newly created kubernetes cluster
-kubectl config use-context bt_trojaj12              # switch context to newly created kubernetes cluster
+# update your kubectl config for newly created kubernetes cluster
+../scripts/locaKubectl.sh bt_trojaj12
+# switch context to newly created kubernetes cluster
+kubectl config use-context bt_trojaj12
 ```
+Feel free to edit cluster name. You can pass new name as an first (`$1`) argument to script. Example uses *bt_trojaj12* as a name for the cluster.
 
 ### 5. Set up k8s
 ```bash
-kubectl apply -f manifests/lab/               # setup cluster
+# setup cluster
+kubectl apply -f manifests/lab/
 ```
 
 ## Test
 Now you should have running kubernetes cluster, you can test that by running following command.
+
+**Setting up lab environment may take some time.** Please wait at least 5 minutes until you start looking for a problem.
 ```bash
 kubectl get nodes
 ```
+In case you see list of nodes which are in state `Ready`, you have successfully created lab environment.
 
 ---
 ## Links
-2. [**NEXT** - Operator Install](operator-install.md)
-
+1. ~~**BACK**~~
+1. [**NEXT** - Operator Install](operator-install.md)
 1. [**HOME**](README.md)
