@@ -1,0 +1,16 @@
+\begin{lstfloat}
+\begin{lstlisting}[style=mybashstyle, caption={Ukázka CRD connection}, label={sample:connection}]
+---
+apiVersion: edge-operator.k8s.dvojak.cz/v1
+kind: Connection
+metadata:
+  name: sample-connection
+  namespace: default
+spec:
+  deviceName: device01-01
+  networkName: bridge-conf
+  componentNames:
+    - backend
+...
+\end{lstlisting}
+\end{lstfloat}

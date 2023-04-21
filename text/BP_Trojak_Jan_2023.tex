@@ -90,8 +90,14 @@
 \usepackage{lipsum,tikz}
 \usepackage{csquotes}
 \usepackage[style=iso-numeric]{biblatex}
-\addbibresource{text/bib-database.bib}
+%\addbibresource{text/bib-database.bib}
+
+\addbibresource{text/bib/all.bib}
+
 \usepackage{listings} % typesetting of sources
+\usepackage{float}
+\newfloat{lstfloat}{htbp}{lop}[section]
+\floatname{lstfloat}{Listing}
 % \usepackage{minted} % typesetting of sources
 
 %theorems, definitions, etc.
@@ -113,7 +119,8 @@
 %%%%%%%%%%%%%%%%%%%%%%
 % DEMO CONTENTS SETTINGS END
 %%%%%%%%%%%%%%%%%%%%%%
-
+\setcounter{biburllcpenalty}{7000}
+\setcounter{biburlucpenalty}{8000}
 \begin{document} 
 \frontmatter\frontmatterinit % do not remove these two commands
 
@@ -145,12 +152,23 @@
 % This is a place to thank people for helping you. It is common to thank your supervisor.
 %%%%%%%%%%%%%%%%%%%
 \begin{acknowledgmentpage}
-	Chtěl bych poděkovat především sit amet, consectetuer adipiscing elit. Curabitur sagittis hendrerit ante. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos hymenaeos. Cras pede libero, dapibus nec, pretium sit amet, tempor quis. Sed vel lectus. Donec odio tempus molestie, porttitor ut, iaculis quis, sem. Suspendisse sagittis ultrices augue.
+	Chtěl bych především poděkovat vedoucímu práce Ing. Tomáši Vondrovi, Ph.D., který velmi pomohl při vzniku této práce ať už věcnými podněty, nebo nasměrováním které vedli k lepším výsledkům. Zároveň bych mu chtě poděkovat za poskytnutí velké volnosti, díky které jsem mohl konkrétněji zaměřit na témata mě blízká.
+    Dále bych chtěl poděkovat Daně Suchomelové, Danielu Hromádkovi a Samuelu Švalichovi za poskytovanou psychickou podporu a prostory pro hacketony, při kterých primárně tato práce vznikla.
+    V neposlední řadě bych chtěl poděkovat open-source komunitě za vytváření skvělých produktů, které jsou dostupné široké veřejnosti. 
 \end{acknowledgmentpage} 
 %%%%%%%%%%%%%%%%%%%
 % ACKNOWLEDGMENT END
 %%%%%%%%%%%%%%%%%%%
-
+\lstdefinestyle{mybashstyle}{
+  language=bash,
+  basicstyle=\small\ttfamily,
+  breaklines=true,
+  breakatwhitespace=true,
+  breakindent=1em,
+  %prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+  postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+  literate={<~>}{\nobreak\ }1, % Replace <~> with a non-breakable space
+}
 
 %%%%%%%%%%%%%%%%%%%
 % DECLARATION
@@ -175,9 +193,9 @@ Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Curabitur sagittis hen
 % List the abbreviations in lexicography order.
 %%%%%%%%%%%%%%%%%%%
 \chapter{Seznam zkratek}
-\input{text/seznam_zkratek}
+\input{text/others/seznam_zkratek}
 \chapter{Seznam pojmů}
-\input{text/seznam_pojmu}
+\input{text/others/seznam_pojmu}
 %%%%%%%%%%%%%%%%%%%
 % ABBREVIATIONS END
 %%%%%%%%%%%%%%%%%%%
@@ -188,8 +206,8 @@ Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Curabitur sagittis hen
 %%%%%%%%%%%%%%%%%%%
 \include{text/text}
 \appendix\appendixinit % do not remove these two commands
-\include{text/prilohy} % include `appendix.tex' from `text/' subdirectory
+\include{text/others/prilohy} % include `appendix.tex' from `text/' subdirectory
 \backmatter % do not remove this command
 \printbibliography % print out the BibLaTeX-generated bibliography list
-\include{text/medium} % include `medium.tex' from `text/' subdirectory
+\include{text/others/medium} % include `medium.tex' from `text/' subdirectory
 \end{document}

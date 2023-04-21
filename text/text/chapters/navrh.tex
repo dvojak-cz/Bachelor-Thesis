@@ -1,4 +1,4 @@
-\chapter{Návrh řešení}
+\chapter{Definice problému a možná řešení}
 
 \begin{chapterabstract}
 Tato kapitola se zaměří na hledání problému popsáného v úvodní části. Cílem této kapitoly je představit různé způsoby řešení problému a poukázat na výhody respektive nevýhody daného řešení.
@@ -29,7 +29,7 @@ Problém nastává, pokud je vyžadována komunikace s okolní \textit{privátn�
 Ve schématu jsou uvedeny dva sítové segmenty. \textit{internal\_Kubernetes} reprezentuje interní síť klastru - \verb|10.244.x.x/16| je pak rozsah definovaný proměnnou \verb|PodCIDR|. Klastr se skládá z trojce výpočetních uzlů kmaster, kworker, kedge. \textit{private\_network} označuje privátní síťoví segment. Tento segment má přidělen rozsah IP adres \verb|172.17.16.x/24| a obsahuje dvě koncová zařízení (device01-01, device01-02). Síťový segment je zcela izolovaný s výjimkou napojení na zařízení kedge.
 
 V uvedeném příkladu je privátní síť a interní síť spojena pouze jedním z uzlů klastru \textit{kedge}. Tento uzel je do privátní sítě \textit{internal\_Kubernetes} a interní Kubernetes sítě \textbf{rivate\_network} připojen pomocí dvou různých sítových kartet. V obecném případě může více uzlů být připojeno do více privátních sítí a zároveň jedna privátní síť může být propojena s klastrem více uzly. Uzly, které takto propojují privátní síť klastru a vnitřní síť Kubernetes mudeme nazývat \textit{edge uzly}
-\\\\
+
 V případě takového nastavení není přímo komunikace objektů klastru se zařízeními v privátních sítích umožněna (ve směru z klastru k zařízením).
 
 Následující část práce bude zaměřena na hledání způsobu, jakým zmíněnou komunikaci umožnit tak, aby co nejvíce vyhovovala stanoveným požadavkům.
@@ -51,17 +51,17 @@ Pro účel práce dává smysl stanovit požadavky na hledané řešení. Požad
 \bigskip\medskip
 Zmíněné komunikace lze dosáhnout více způsoby, každý z těchto způsobů má jisté výhody a nevýhody. Jako první se podívám na již existující technologii \textit{Kube~edge}, která by daný problém mohla do jisté míry řešit.
 \section{Řešení pomocí Kube edge}
-Kube edge je projekt společnosti cloud native computing foundation, který rozšiřující Kubernetes pro použití na koncových zařízení (edge devices). Tento projekt je vyvíjen pro potřeby edge cloud computing archytektury systému.\footnote{https://www.techtarget.com/searchdatacenter/definition/edge-computing} Cílem projektu kube~edge je usnadnit provoz Kubenets na zařízeních, které mohou mít omezené prostředky, jejich připojení není stále, stabilní a jsou provozovány na různých lokacích. Kube~edge umožňuje tyto zařízení integrovat do existujících Kubernetes klastrů. Díky tomuto lze dobře pracovat s různými zařízeními, jako jsou například IoT zařízení, různé senzory, zařízení pro chytrá města\ldots \footnote{https://kubeedge.io/en/}
+Kube edge je projekt společnosti cloud native computing foundation, který rozšiřující Kubernetes pro použití na koncových zařízení (edge devices). Tento projekt je vyvíjen pro potřeby edge cloud computing archytektury systému.\cite{bigelow_2021_what} Cílem projektu kube~edge je usnadnit provoz Kubenets na zařízeních, které mohou mít omezené prostředky, jejich připojení není stále, stabilní a jsou provozovány na různých lokacích. Kube~edge umožňuje tyto zařízení integrovat do existujících Kubernetes klastrů. Díky tomuto lze dobře pracovat s různými zařízeními, jako jsou například IoT zařízení, různé senzory, zařízení pro chytrá města\ldots \cite{kubeedgeprojectauthors_2023_kubeedge}
 
 Kube edge je převážně určen k integraci zařízeních, na kterých je možné provozovat samotné kontejnery a službu kubelet. Primární účel kube edge se tedy neřeší výše popsaný problém, ale je velmi úzce spjatý s komunikací určitých zařízení a interní sítě Kubernetes. Z tohoto důvodu lze v implementaci kuebedge nalést alespoň částečné řešení zmíněného problému a to pro komunikaci za pomocí MQTT protokolu, případně protokolu HTTP.
 
 Kube~edge obsahuje celkem 6 komponent tvořících projekt. Jednou z těchto komponent je EventBus. EventBus je komponenta, která umožňuje komunikaci s externími zařízeními pomocí MQTT protokolu. V případě, že bychom se omezili pouze na komunikaci protokol MQTT, pak by EventBus řešil definovaný způsob a zároveň by splňoval veškeré stanovené požadavky.
 
-Pro potřeby komunikace pomocí protokolu HTTP obsahuje Kube edge komponentu ServiceBus. Tato komponenta umožňuje komunikovat se službami běžícími na výpočetních uzlech koncových zařízení (které jsou součástí klastru), tyto služby však nejsou přímo součástí systému Kubernetes. V uvedeném příkladu to znamená, že kube edge by umožnilo komunikovat se službou běžící na uzlu \textit{kedge}. Lze si to představit jako loopback komunikaci v rámci jednoho uzlu. Komponenty ServiceBus lze využít dvěma způsoby. Prvním řešením je upravení upravit zdrojové kódy Kube~edge tak, aby podporoval komunikaci i mimo klastr (výpočetní uzly). To by znamenalo, že kedge by vytvořil jakýsi most mezi privátní sítí a sítí Kubernetes. Tento způsob by byl funkční, ale velmi nestandardní a těžce udržitelný, proto není vhodným řešením. Druhý způsob je vytvoření HTTP služby, která by běžela na \textit{kedge} a sloužila by jako prostředník komunikace. Taková služba by naslouchala na lokální adrese serveru a následně HTTP požadavky delegovala na daná koncová zařízení v privátní síti. Takové řešení by bylo funkční, ale velmi náročné na provoz. Zároveň by omezovalo problém pouze na HTTP protokol, což je v rozporu s požadavky řešení. Pro stanovené požadavky je tento způsob také nedostačující. \footnote{https://github.com/kubeedge/kubeedge/blob/master/edge/pkg/servicebus/servicebus.go:171}
+Pro potřeby komunikace pomocí protokolu HTTP obsahuje Kube edge komponentu ServiceBus. Tato komponenta umožňuje komunikovat se službami běžícími na výpočetních uzlech koncových zařízení (které jsou součástí klastru), tyto služby však nejsou přímo součástí systému Kubernetes. V uvedeném příkladu to znamená, že kube edge by umožnilo komunikovat se službou běžící na uzlu \textit{kedge}. Lze si to představit jako loopback komunikaci v rámci jednoho uzlu. Komponenty ServiceBus lze využít dvěma způsoby. Prvním řešením je upravení upravit zdrojové kódy Kube~edge tak, aby podporoval komunikaci i mimo klastr (výpočetní uzly). To by znamenalo, že kedge by vytvořil jakýsi most mezi privátní sítí a sítí Kubernetes. Tento způsob by byl funkční, ale velmi nestandardní a těžce udržitelný, proto není vhodným řešením. Druhý způsob je vytvoření HTTP služby, která by běžela na \textit{kedge} a sloužila by jako prostředník komunikace. Taková služba by naslouchala na lokální adrese serveru a následně HTTP požadavky delegovala na daná koncová zařízení v privátní síti. Takové řešení by bylo funkční, ale velmi náročné na provoz. Zároveň by omezovalo problém pouze na HTTP protokol, což je v rozporu s požadavky řešení. Pro stanovené požadavky je tento způsob také nedostačující. \cite{ttlv_2021_servicebusgo}
 
 V obou zmíněných případech by kube~edge poskytoval funkci prostředíka komunikace mezi sítí Kubernetes a privátní sítí.
 
-Kube~edge je velmi zajímavá technologie, která je užitečná při integraci koncových zařízení do Kubernetes, ale pro účel propojení klastru s privátní sítí nedostatečná. I přesto, že dnes kube edge nenabízí plné řešení problému, je dost pravděpodobné, že potřebná funkcionalita bude v budoucnu přidána. Cindy Xing (vedoucí projektu kube~edge) a Kevin Wang (co-founder a vývojář kube~edge) na konferencích KubeCon uvedli, že plánují rozšířit projekt tak, aby podporoval více protokoolů a zároveň se chtějí dále věnovat rozšíření stávající infrastruktury pro komunikaci a adresaci služeb (service mesh).\footnote{https://youtu.be/pdqlANkpOMs?t=847}\footnote{https://youtu.be/XFaPZbOwgEM}\footnote{data pochází z konferencí a dokumentace}
+Kube~edge je velmi zajímavá technologie, která je užitečná při integraci koncových zařízení do Kubernetes, ale pro účel propojení klastru s privátní sítí nedostatečná. I přesto, že dnes kube edge nenabízí plné řešení problému, je dost pravděpodobné, že potřebná funkcionalita bude v budoucnu přidána. Cindy Xing (vedoucí projektu kube~edge) a Kevin Wang (co-founder a vývojář kube~edge) na konferencích KubeCon uvedli, že plánují rozšířit projekt tak, aby podporoval více protokoolů a zároveň se chtějí dále věnovat rozšíření stávající infrastruktury pro komunikaci a adresaci služeb (service mesh).\cite{cncfcloudnativecomputingfoundation_2019_intro}\cite{cncfcloudnativecomputingfoundation_2022_intro}\footnote{data pochází z konferencí a dokumentace}
 
 \section{Řešení pomocí Proxy}\label{sec:req}
 Popsané možné řešení za pomocí Kube edge zmiňuje využití zmíněních komponent jako prostředníka komunikace. V oblasti síťování se o takovéto službě prostředníka mluví jako o službě Proxy (zkráceně Proxy). Proxy je služba, která umožňuje přistupovat k různým službám skrze Proxy Serveru (postředníka). Tato služba plní řadu funkcí. Mimo přeposílání komunikací může poskytovat zabezpečení, filtrovat tok dat, zaznamenávat informace o komunikaci\ldots Proxy servery mohou pracovat na různých vrstvách ISO/OSI modelu, nejčastěji operují na vrstvě čtvrté respektive sedmé, kde často operují s protokoly TCP, UDP respektive HTTP.
@@ -87,60 +87,14 @@ V tuto chvíli je potřeba zajistit výše zmíněnou konfiguraci síťových pr
 \subsection{Síťování uvnitř podu}
 Pod poskytuje sdílený síťoví prostor mezi všemi kontejnery daného podu. Tento síťový prostor je vytvořen pomocí container runtime. Container runtime je ovládán komponentou kubelet na daném výpočetním uzlu. Ve chvíli, kdy je jmenný prostor vytvořen je pomocí CNI pluginu vloženo síťové rozhraní \verb|eth0| a následně je nastavenou síťování tak, aby splňovalo požadavky pro komunikaci definované Kubernetesem. Tímto způsobem vznikne nový síťoví prostor pro pod, ve kterém se budou nacházet rozhraní \verb|lo| loopback a \verb|eth0| pro komunikaci s vnitřní sítí klastru. Na příkladu níže je vidět popisované nastavení.
 
-\begin{verbatim}
-# Create sample pod and attatch to its terminal
-[1]$ kubectl run my-pod --image=nicolaka/netshoot:v0.9 -it --rm
-
-# List network interfaces
-[2]$ ip --br l
->>> lo          UNKNOWN     00:...:00   <LOOPBACK,UP,LOWER_UP> 
->>> eth0@if11   UP          3a:...:aa   <BROADCAST,MULTICAST,UP,LOWER_UP>
-
-# List network interfaces and IP adresses assiged to them
-[2]$ ip --br a
->>> lo          UNKNOWN     127.0.0.1/8 
->>> eth0@if11   UP          10.244.0.9/16  
-\end{verbatim}
+\input{text/code/cmd_podNet}
 
 \subsection{Root namespace}
 Pro potřeby použití proxy uvnitř Kubernetes je nutné, aby pod, ve kterém poběží služba proxy měl přístup k dvou síťovým segmentům. K Interní sítí Kubernetes a k privátní síti, ke které bude proxy služba tvořit bránu. Toto je potřeba, aby bylo možné co přímo přistupovat k potřebným síťovým prostředkům uvnitř podu a tak umožnit službě proxy operovat na čtvrté vrstvě ISO/OSI modelu. Z tohoto důvodu je potřeba, aby pod obsahoval alespoň dvě síťové rozhraní (pro interní kubernetes síť a pro privátní síť se zařízeními). Ve výchozím nastavení podu toto není možné, jelikož je vždy vytvořen nový namespace pouze s jedním rozhraním -- a tím je pod uzavřen pouze do interní sítě Kubernetes a izolován o ostatních síťových segmentů.
 
 Pro konfiguraci síťového jemného prostoru poskytuje Kubernetes API pouze jeden parametr \verb|pod.spec.hostNetwork|. Hodnota tohoto parametru nabývá pouze logické hodnoty True nebo False. Výchozí hodnota tohoto parametru je False. Tímto parametrem lze specifikovat, zda Kubernetes má pro daný pod vytvářet nový izolovaný síťový prostor, nebo využít stávající kořenový síťoví prostor. V případě, že je tento parametr nastaven na hodnotu True, pak všechny procesy uvnitř daného podu mají přístup k síťovým prvkům v kořenovém jmenném prostoru (stejně jako běžící proces kubelet...). V takovém případě budou pro pod dostupné všechna síťová rozhraní a navíc rozhraní \verb|eth0|, kterém bude připojeno do virtualní sítě Kubernetes. Ukázku tohoto si lze prohlédnout níže.
 
-\begin{verbatim}
-# Crete pod with ".spec.hostNetwork=true"
-[1]$ kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Pod
-metadata:
-  name: my-pod
-spec:
-  hostNetwork: true
-  containers:
-    - image: nicolaka/netshoot:v0.9
-      name: my-pod
-      command: ["tail"]
-      args: ["/dev/random"]
-EOF
-
-# Attach to newly created pod
-[1]$ kubectl exec -it my-pod -- bash
-
-# List network interfaces
-[2]$ ip --br l
->>> lo               UNKNOWN    00:...:00 <LOOPBACK,UP,LOWER_UP> 
->>> bridge           UP         1a:...:09 <BROADCAST,MULTICAST,UP,LOWER_UP> 
->>> veth2553bd1f@if2 UP         ee:...:32 <BROADCAST,MULTICAST,UP,LOWER_UP> 
->>> eth0@if10        UP         02:...:02 <BROADCAST,MULTICAST,UP,LOWER_UP>
-
-# List network interfaces and IP adresses assiged to them
-[2]$ ip --br a
->>> lo               UNKNOWN    127.0.0.1/8 
->>> docker0          DOWN       172.17.0.1/16 
->>> bridge           UP         10.244.0.1/16 
->>> veth2553bd1f@if2 UP
->>> eth0@if10        UP         192.168.49.2/24
-\end{verbatim}
+\input{text/code/cmd_podHostNet}
 
 Tímto lze jednoduše splnit poslední podmínku pro provozování proxy jako aplikaci v Kubernetes. Nyní stačí správně spustit a nastavit proxy tak, aby propojovala síť privátní se sítí kubenretes. Tato proxy by běžela v Podu, s nastavenou hodnotou \verb|pod.spec.hostNetwork| na True. Pod by běžel na potřebném edge uzlů.
 
@@ -157,8 +111,8 @@ Ve skutečnosti bych řekl, že jsou to anti-vzory pro 99,99 \% případů použ
 
 Nemyslím si, že by bylo přitažené za vlasy naznačovat, že to nikdy, nikdy nebudete muset udělat.
 \end{displayquote}
-\footnote{https://medium.com/google-cloud/understanding-Kubernetes-networking-ingress-1bc341c84078} 
-\footnote{https://www.deepl.com/translator}
+\cite{betz_2022_understanding} 
+\footnote{Přeloženo pomocí https://www.deepl.com/translator}
 
 Z výše zmíněných důvodů nelze toto označit za vyhovující řešení problému. Mohlo by se stát, že tento přístup by byl zamítnut na základě stanovených bezpečnostních politik uživatelů.
 
@@ -169,16 +123,16 @@ Předchozí sekce ukazuje, jakým způsobem lze v podu přistupovat k sítovým 
 
 Již v teoretické části bylo zmíněno, že Kubernetes k síťování používá CNI standardu. CNI definuje formát souboru, kterým lze definovat a konfigurovat jak mají být dané CNI moduly používány. Jedná se o informace ve formě JSON souboru, který je uložen na disku dané serveru (pracovního uzlu). Tento soubor se nachází v \verb|/etc/cni/net.d/| na každém funkčním severu, který je součástí klastru. Název souboru není nijak omezen. Kubernets pracuje vždy se souborem, který se nachází v příslušném adresáři a je první dle abecedního pořadí. Zmíněná konfigurace nese informace o verzi CNI a jménu CNI modulu, který má být využíván. Samotné moduly jsou ve výchozím nastavení ukládány do \verb|/opt/cni/bin|. 
 
-V dřívějších verzích kubernetes bylo možné definovat cestu k adresáři s konfigurací pomocí \verb|--cni-conf-dir|, tento flag byl ve verzi \verb|1.24| odstraněn.
-\footnote{https://github.com/Kubernetes/Kubernetes/blob/master/CHANGELOG/CHANGELOG-1.24.md} \footnote{https://Kubernetes.io/docs/concepts/extend-Kubernetes/compute-storage-net/network-plugins/}. Cesta k CNI modulům je možné natavit pomocí proměnné prostředí \verb|CNI_PATH| na daném uzlu.
+V dřívějších verzích kubernetes bylo možné definovat cestu k adresáři s konfigurací pomocí \verb|--cni-conf-dir|, tento flag byl ve verzi \verb|1.24| odstraněn. \cite{k8scirobot_2020_merge} 
+\cite{thekubernetesauthors_2022_network} Cesta k CNI modulům je možné natavit pomocí proměnné prostředí \verb|CNI_PATH| na daném uzlu.
 
-\subsection{Kubernetes Network Custom Resource Definition De-facto Standard}
-Potřeba lépe kontrolovat síťové prostředky uvnitř podu a přímo možnost vytvářet pody s více síťovými rozhraními byla diskutovaná na konferenci \textit{KubeCon + CloudNativeCon North America} v proce 2017 v Austinu\footnote{https://www.cncf.io/blog/2018/01/10/look-back-kubecon-cloudnativecon-north-america-2017-part-1/}. Na této konferenci vznikla skupina \textit{NPWG}(Network Plumbing Working Group). NPWG vznikla primárně za účelem umožnit vytváření Podů s více sítovými rozhraními. Cílem skupiny bylo vytvořit specifikaci pro konfiguraci přídavných síťových rozhraní a následně implementovat jednoduché řešení, pro účely prezentace výsledků.
+\subsection{Kubernetes Network Custom Resource Definition De-facto Standard}\label{sec:kncrdds}
+Potřeba lépe kontrolovat síťové prostředky uvnitř podu a přímo možnost vytvářet pody s více síťovými rozhraními byla diskutovaná na konferenci \textit{KubeCon + CloudNativeCon North America} v proce 2017 v Austinu\cite{woods_2018_a}. Na této konferenci vznikla skupina \textit{NPWG}(Network Plumbing Working Group). NPWG vznikla primárně za účelem umožnit vytváření Podů s více sítovými rozhraními. Cílem skupiny bylo vytvořit specifikaci pro konfiguraci přídavných síťových rozhraní a následně implementovat jednoduché řešení, pro účely prezentace výsledků.
 
 Zmíněná specifikace, která byla skupinou NPWG se nazývá \textit{Kubernetes Network Custom Resource Definition De-facto Standard}. Tento standard slouží pro definici objektů a API pro vývojáře, kteří chtějí umožnit rozšířit standardní chování kubernetes, o podu s více sítovými rozhraními. Specfikace definuje následující:
 
 \begin{itemize}
-    \item Objekt \textit{Network Attachment Definition}\\
+    \item Objekt Network Attachment Definition\\
     Objekt NAD (Network Attachment Definition) je nový objekt, který specifikace přidává do kubernetes API. Tento objekt je definován v doméně \verb|k8s.cni.cncf.io|.\footnote{Vysvětlení domény se nachází v implementacní části}. NAD slouží pro definici přídavných síťových rozhraní. Tento objekt obsahuje jediný parametr \verb|.spec.conf|, v tomto parametru lze ukládat informace o přídavném rozhraní. Pro definovaná přídavného rozhraní stačí do zmíněného parametru uložit CNI konfigurační soubor, formou JSON stringu.\\
     NAD umožňuje ukládat nastavení pro přídavná síťová rozhraní. Při vytváření Podu s přídavnými rozhraními je na NAD objekty odkazováno.
     \item Požadavky pro delegující CNI modul\\
@@ -189,3 +143,6 @@ Zmíněná specifikace, která byla skupinou NPWG se nazývá \textit{Kubernetes
     Specifikace definuje i další způsoby, jakým definovat přídavné rozhraní přímo v definici Podu. Zároveň udává další pravidla pro komunikaci s delegující CNI moduly. Tyto způsoby a pravidla jsou specifická různé případy použití a proto zde nebudou uvedeny. V případě zájmu je možné přečíst samotnou specifikaci. 
 \end{itemize}
 Díky této specifikaci a delegující CNI modulům, které tuto specifikaci implemetnují, je možné vytvářet pody s více síťovými rozhraními. Network Custom Resource Definition efektivně řeší poslední požadavek pro použití proxy definovaný v sekci \ref{sec:req}. Tímto je možné využít proxy pro řešení problému propojení interní sítě kubernetes a přilehlé privátní sítě.
+
+
+\textbf{Na zaver napsat, ze navrch reseni pomoci proxy je nejlepsím možným řešením daného probému a proto bude použit pro immplementaci}

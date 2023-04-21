@@ -1,0 +1,38 @@
+\begin{lstfloat}
+\begin{lstlisting}[
+style=mybashstyle,
+caption={Ruční nastavení síťování konteneru dle ovladače docker bridge},
+label={cmd:bridge}]
+# Create container without any network
+[_]$ docker run --rm -it --net none --name example travelping/nettools &
+
+# Reference namespace that docker has created for us
+[_]$ mkdir -p /var/run/netns
+[_]$ touch /var/run/netns/docker
+[_]$ mount -o bind /proc/`docker<~>inspect<~>-f<~>'{{.State.Pid}}'<~>example`/ns/net /var/run/netns/docker
+
+# Create veth pair
+[_]$ ip link add ceth0 type veth peer name veth0
+
+# Move one interface to docker net namespace 
+[_]$ ip link set netns docker dev veth0
+
+# Create bridge
+[_]$ ip link add br0 type bridge
+
+# Connect second interface to bridge
+[_]$ ip link set veth0 master br0
+
+# Add IPs to interaces
+[_]$ ip netns exec docker ip addr add 192.168.1.100/24 dev ceth0
+[_]$ ip addr add 192.168.1.50/24 dev br0
+
+# Set default gateway for docekr to bridge
+[_]$ ip netns exec docker ip route add default via 192.168.1.50
+
+# Set all interface to up state
+[_]$ ip netns exec docker ip link set up dev ceth0
+[_]$ ip link set up dev br0
+[_]$ ip link set up dev veth0
+\end{lstlisting}
+\end{lstfloat}
