@@ -49,7 +49,12 @@ public class ConnectionController : IResourceController<ConnectionEntity>
             else
             {
                 _logger.LogInformation($"Proxy deployment {proxyName} already exists");
-            }
+                _logger.LogInformation($"Constructing proxy deployment {proxyName}");
+                var deployment =
+                    await _proxyCreator.CreateProxyDeployment(entity, entity.Spec.NetworkName, entity.Namespace());
+                _logger.LogInformation($"Updating proxy deployment {proxyName}");
+                await _client.Update(deployment);
+                _logger.LogInformation($"Proxy deployment {proxyName} updated");}
         }
         catch (Exception e)
         {
@@ -69,7 +74,11 @@ public class ConnectionController : IResourceController<ConnectionEntity>
             else
             {
                 _logger.LogInformation($"Proxy service {proxyName} already exists");
-            }
+                _logger.LogInformation($"Constructing proxy service {proxyName}");
+                var service = await _proxyCreator.CreateProxyService(entity, entity.Namespace());
+                _logger.LogInformation($"Updating proxy service {proxyName}");
+                await _client.Update(service);
+                _logger.LogInformation($"Proxy service {proxyName} updated");            }
         }
         catch (Exception e)
         {
