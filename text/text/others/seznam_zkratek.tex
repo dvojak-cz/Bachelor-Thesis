@@ -1,4 +1,11 @@
-%grep -rnEoe '[[:upper:]]{2,}' 2>/dev/null | grep -E '^[^:]+tex:' | cut -d ':' -f3 | sort -u
+%grep -rEoe '[A-Z]{2,}' --include '*.tex' | cut -d ':' -f2 | sort -u | grep -vE "$(cat text/others/seznam_zkratek.tex | grep '^[A-Z]' | cut -d' ' -f1 | tr '\n' '|')$(cat text/others/ignore.zk.txt | tr '\n' '|' )a" -
+
+%grep -rEoe '[A-Z]{2,}' --include '*.tex' | cut -d ':' -f2 | sort -u | SZ=text/others/seznam_zkratek.tex grep -vE "$(cat "${SZ}" | grep '^[A-Z]' | cut -d' ' -f1 | tr '\n' '|')$(cat text/others/ignore.zk.txt | tr '\n' '|' )a" -
+%export SZ=text/others/seznam_zkratek.tex
+%export IZ=text/others/ignore.zk.txt
+%grep -rEoe '[A-Z]{2,}' --include '*.tex' | cut -d ':' -f2 | sort -u | grep -vE "$(cat "${SZ}" | grep '^[A-Z]' | cut -d' ' -f1 | tr '\n' '|')$(cat "${IZ}" | tr '\n' '|' )a" -
+
+
 \begin{tabular}{rl}
 TCP & Transmission Control Protocol\\
 UDP & User Datagram Protocol\\
@@ -31,4 +38,11 @@ SSL & foo\\
 TLS & foo\\
 URI & foo\\
 VXLAN & foo\\
+ARP & foo\\
+BP & foo\\
+FIT & foo\\
+HW & foo\\
+NAD & foo\\
+QUIC & foo\\
+UTS & foo\\
 \end{tabular}

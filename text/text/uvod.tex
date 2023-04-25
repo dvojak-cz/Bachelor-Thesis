@@ -11,12 +11,11 @@ Hardwarový prvek který není možné přímo přidat do sítě serverů není 
 
 Tato práce se zaměřuje na možnost, jak rozšířit možnosti orchestrátoru kubernetes o možnost adresace a komunikace s hardwarovými periferiemi v privátních sítích při použití kubernetes. Zkoumaná komunikace s hardwarovými prvky bude probíhat pomocí \textit{TCP}, \textit{UDP} a \textit{HTTP} protokolů.
 
-Navrhnuté řešení by mělo být obecné a nezávislé na nestandardním nastavení kubernetes. Zároveň by nemělo nijak ovlivňovat jakékoliv funkcionality kubernetes. 
+Navržené řešení by mělo být obecné a nezávislé na nestandardním nastavení kubernetes. Zároveň by nemělo nijak ovlivňovat jakékoliv funkcionality kubernetes. 
 
 \newpage
 
 \section{Motivace}
-\textbf{EdgeCloud}
 Tato práce vnikla pro potřeby HIL\footnote{HIL (hardware in loop) je technika testování hardwarových zařízení, kde je zařízení testováno v simulovaném prostředí. Simulace prostředí nejčastěji probíhá pomocí matematických modelů, které generují signály pro dané zařízení.} testování v prostředí cloudu. Myšlenkou je nalézt způsob, jakým umožnit testování komunikace různých hardwarových prvků a simulací tak, aby bylo možné tyto prvky a simulace jednoduše kombinovat. Pro tyto účely je zapotřebí umožnit komunikaci mezi kubernetes a zařízeními, které nejsou připojené do internetlvé sítě. Díky integrování HIL testování do prostředí cloudu se zlepší možnosti testování. Zároveň se zjednoduší práce potřebná pro nastavování prostředí, pokud se využije stávajících orchestračních řešení.
 
 \section{Cíle práce}
@@ -28,18 +27,16 @@ V této práci se budou často vyskytovat názvy objektů z systému Kubernetes.
 
 Základní pojmy, které jsou v práci použity se nachází na začátku této práce. V průběhu textu může být zaveden nový pojem, který je potřeba podrobněji vysvětlit. V případě zavedení takového pojmu bude pojem zvýrazněn odlišným písmem od okolního textu, aby byl čtenář upozorněn. Ukázkou by mohlo být například slovo \term{kernel}. Kernel (česky jádro) je část operačního systému, která přímo komunikuje s hardwarem počítače.  
 
-V případě, že se jedná o ukázku části kódu nebo z příkazové řádky, bude použit specifický blok. Ukázkový blok kódů je uveden ve výpisu kódu.
+V případě, že se jedná o ukázku z příkazové řádky, bude použit specifický blok. Ukázkový blok je uveden ve výpisu kódu \ref{sample:cmd}.
 
-\input{text/code/sample_code}
-
-Stejným způsobem budou zobrazovány i terminálové příkazy. Pokud se příkazy provádějí v různých prostředích, budou prostředí uvedena v hranatých závorkách, pokud je prostředí jednotné, bude použit symbol podtržítka. Příkazy vždy načínají symbolem "\verb|$|", výstupy konzole jsou uvedeny symbolem "\verb|>>> |". Příklad je uveden ve výpisu
+Pokud se příkazy provádějí v různých prostředích, budou prostředí uvedena v hranatých závorkách. Pokud je prostředí jednotné, bude použit symbol podtržítka. Příkazy vždy načínají symbolem "\verb|$|", výstupy konzole jsou uvedeny symbolem "\verb|>>> |".
 \input{text/code/sample_cmd}
 
-Příkazy z těchto bloků jsou převeditelné na script pomocí následujícího příkazu 
+Příkazy z těchto bloků jsou převeditelné na script pomocí následujícího příkazu \ref{cmd:exec} 
 \input{text/code/cmd_exec}
 
 \section{Prostředí a použité verze softwaru}
-Veškeré příklady jsou prováděny ve virtuálním stroji na systému \term{centos/7}. Virtuální prostředí lze spustit pomocí služby \term{vagarnt}. V případě, potřeby lze virtuální prostředí nastavit pomocí následujících příkazů.
+Veškeré příklady jsou prováděny ve virtuálním stroji na systému \term{CentOS/7}. Virtuální prostředí lze spustit pomocí služby \term{vagarnt}. V případě potřeby lze virtuální prostředí nastavit pomocí následujících příkazů.
 \input{text/code/sample_vm}
 
 Pro správné použití je potřeba mít nainstalovaný vagrant a libovolný podporovaný virtualizační nástroj (hypervisor).
