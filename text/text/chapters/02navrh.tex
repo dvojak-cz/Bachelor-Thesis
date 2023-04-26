@@ -15,13 +15,13 @@ Síťovou komunikací budeme myslet komunikaci probíhající na síťové vrstv
 
 Kubernetes poskytuje řešení pro několik typů síťové komunikace. Nejzákladnějším z nich je komunikace mezi libovolnými Pody, kteří jsou součástí jednoho klastru. Pro tento druh datového přenosu nepřináší Kubernetes žádnou formu omezení. Přenos je umožněn plně, všemi směry. Komunikace směrem do klastru z okolní sítě také není nijak zvláštně omezena. Pro tuto komunikaci lze využít některé ze standardních objektů, které Kubernetes nabízí (Ingress, Service). Tento druh přenosu vyžaduje konfiguraci klastru, ale je také umožněn bez jakéhokoliv omezení.
 
-Posledním druhem komunikace je spojení klastru s okolní sítí, ve směru do okolní sítě. Toto spojení je bezproblémové v případě, že aplikace v klastru adresuje objekt, který je veřejně dostupný\footnote{Veřejně dostupným objektem budeme chápat libovolný server, který je dostupný ve veřejné síti internetu, a server, který je dostupný ze všech výpočetních uzlů klastru} v okolní síti. Příkladem takového spojení je například požadavek na veřejnou DNS službu. V případě, že některá z aplikací běžících v Kubernetes se obrátí například na server \verb|8.8.8.8|\footnote{8.8.8.8 je známy DNS server spravovaný spojeností Google}, pak komunikace proběhne bez potíží. Požadavek je na jednom z uzlů klastru pozměně, tak aby byl validním v okolní síti mimo klastr (typicky je pozměněna hlavička IP protokolu - pomocí SNAT) a poté je požadavek vyslán do okolní sítě klastru.
+Posledním druhem komunikace je spojení klastru s okolní sítí, ve směru do okolní sítě. Toto spojení je bezproblémové v případě, že aplikace v klastru adresuje objekt, který je veřejně dostupný\footnote{Veřejně dostupným objektem budeme chápat libovolný server, který je dostupný ve veřejné síti internetu, a server, který je dostupný ze všech výpočetních uzlů klastru} v okolní síti. Příkladem takového spojení je například požadavek na veřejnou DNS službu. V případě, že některá z aplikací běžících v Kubernetes se obrátí například na server \verb|8.8.8.8|, pak komunikace proběhne bez potíží. Požadavek je na jednom z uzlů klastru pozměně, tak aby byl validním v okolní síti mimo klastr (typicky je pozměněna hlavička IP protokolu - pomocí SNAT) a poté je požadavek vyslán do okolní sítě klastru.
 
 Problém nastává, pokud je vyžadována komunikace s okolní \textit{privátní} sítí. Privátní sítí myslíme síťový segment, který není dostupný ve veřejném internetu a zároveň není dostupný ze všech uzlů klastru. Tato situace je ilustrována na schématu \ref{fig:schema} níže.
 
 \begin{figure}[!ht]
     \centering
-    \includegraphics[width=0.8\textwidth]{images/network.pdf}
+    \includegraphics[width=0.7\textwidth]{images/network.pdf}
     \caption{schema}
     \label{fig:schema}
 \end{figure}
@@ -61,8 +61,7 @@ Pro potřeby komunikace pomocí protokolu HTTP obsahuje Kube edge komponentu Ser
 
 V obou zmíněných případech by kube~edge poskytoval funkci prostředíka komunikace mezi sítí Kubernetes a privátní sítí.
 
-Kube~edge je velmi zajímavá technologie, která je užitečná při integraci koncových zařízení do Kubernetes, ale pro účel propojení klastru s privátní sítí nedostatečná. I přesto, že dnes kube edge nenabízí plné řešení problému, je dost pravděpodobné, že potřebná funkcionalita bude v budoucnu přidána. Cindy Xing (vedoucí projektu kube~edge) a Kevin Wang (co-founder a vývojář kube~edge) na konferencích KubeCon uvedli, že plánují rozšířit projekt tak, aby podporoval více protokoolů a zároveň se chtějí dále věnovat rozšíření stávající infrastruktury pro komunikaci a adresaci služeb (service mesh).\cite{cncfcloudnativecomputingfoundation_2019_intro}\cite{cncfcloudnativecomputingfoundation_2022_intro}\footnote{data pochází z konferencí a dokumentace}
-
+Kube~edge je velmi zajímavá technologie, která je užitečná při integraci koncových zařízení do Kubernetes, ale pro účel propojení klastru s privátní sítí nedostatečná. I přesto, že dnes kube edge nenabízí plné řešení problému, je dost pravděpodobné, že potřebná funkcionalita bude v budoucnu přidána. Cindy Xing (vedoucí projektu kube~edge) a Kevin Wang (co-founder a vývojář kube~edge) na konferencích KubeCon uvedli, že plánují rozšířit projekt tak, aby podporoval více protokoolů a zároveň se chtějí dále věnovat rozšíření stávající infrastruktury pro komunikaci a adresaci služeb (service mesh).\cite{cncfcloudnativecomputingfoundation_2019_intro},\cite{cncfcloudnativecomputingfoundation_2022_intro}
 \section{Řešení pomocí Proxy}\label{sec:req}
 Popsané možné řešení za pomocí Kube edge zmiňuje využití zmíněních komponent jako prostředníka komunikace. V oblasti síťování se o takovéto službě prostředníka mluví jako o službě Proxy (zkráceně Proxy). Proxy je služba, která umožňuje přistupovat k různým službám skrze Proxy serveru (postředníka). Tato služba plní řadu funkcí. Mimo přeposílání komunikací může poskytovat zabezpečení, filtrovat tok dat, zaznamenávat informace o komunikaci\ldots Proxy servery mohou pracovat na různých vrstvách ISO/OSI modelu, nejčastěji operují na vrstvě čtvrté respektive sedmé, kde často operují s protokoly TCP, UDP respektive HTTP.
 
@@ -101,12 +100,11 @@ Tímto lze jednoduše splnit poslední Podmínku pro provozování proxy jako ap
 I přesto, že je tento způsob zcela funkční, nesplňuje požadavek na bezpečnost, který je specifikován v sekci \ref{sec:pozadavky}. Řešení velmi oslabuje virtualizaci, kterou nám kontejnery a Kubernetes poskytuje. Tím je výrazně oslabena bezpečnost tohoto systému. Procesy, běžící v Podu by měli úplný přístup k síťovím prostředlům hostujícího systému. Toto velmi rozšiřuje možnost útoku na hostující systém respektive na prostředí Kubernetes. Používání \verb|pod.spec.hostNetwork| lze označít za ani-pattern, právě kvůli narušení virtualizace. Toto potvrzuje i Mark Betz ve svém blogu \textit{Understanding Kubernetes networking}. 
 
 \begin{displayquote}
-\uv{In fact I would suggest that they are anti-patterns for 99.99 per cent of use cases, and any implementation that makes use of either should get an automatic design review}\\(Ve skutečnosti bych řekl, že jsou to anti-vzory pro 99,99 procent případů použití, a každá implementace, která je používá, by měla být automaticky přezkoumána.)
+\uv{In fact I would suggest that they are anti-patterns for 99.99 per cent of use cases, and any implementation that makes use of either should get an automatic design review}\\(Ve skutečnosti bych řekl, že jsou to anti-vzory pro 99,99 procent případů použití, a každá implementace, která je používá, by měla být automaticky přezkoumána.)\cite{betz_2022_understanding} 
 
-\uv{I don’t think it’s a stretch to suggest that you are never, ever going to need to do this.}\\(Nemyslím si, že by bylo přitažené za vlasy naznačovat, že to nikdy, nikdy nebudete muset udělat.)
+\uv{I don’t think it’s a stretch to suggest that you are never, ever going to need to do this.}\\(Nemyslím si, že by bylo přitažené za vlasy naznačovat, že to nikdy, nikdy nebudete muset udělat.)\cite{betz_2022_understanding} 
 \end{displayquote}
-\cite{betz_2022_understanding} 
-\footnote{Přeloženo pomocí https://www.deepl.com/translator}
+
 
 Z výše zmíněných důvodů nelze toto označit za vyhovující řešení problému. Mohlo by se stát, že tento přístup by byl zamítnut na základě stanovených bezpečnostních politik uživatelů.
 
@@ -117,8 +115,7 @@ Předchozí sekce ukazuje, jakým způsobem lze v Podu přistupovat k sítovým 
 
 Již v teoretické části bylo zmíněno, že Kubernetes k síťování používá CNI standardu. CNI definuje formát souboru, kterým lze definovat a konfigurovat jak mají být dané CNI moduly používány. Jedná se o informace ve formě JSON souboru, který je uložen na disku dané serveru (pracovního uzlu). Tento soubor se nachází v \verb|/etc/cni/net.d/| na každém funkčním severu, který je součástí klastru. Název souboru není nijak omezen. Kubernets pracuje vždy se souborem, který se nachází v příslušném adresáři a je první dle abecedního pořadí. Zmíněná konfigurace nese informace o verzi CNI a jménu CNI modulu, který má být využíván. Samotné moduly jsou ve výchozím nastavení ukládány do \verb|/opt/cni/bin|. 
 
-V dřívějších verzích Kubernetes bylo možné definovat cestu k adresáři s konfigurací pomocí \verb|--cni-conf-dir|, tento flag byl ve verzi \verb|1.24| odstraněn. \cite{k8scirobot_2020_merge} 
-\cite{thekubernetesauthors_2022_network} Cesta k CNI modulům je možné natavit pomocí proměnné prostředí \verb|CNI_PATH| na daném uzlu.
+V dřívějších verzích Kubernetes bylo možné definovat cestu k adresáři s konfigurací pomocí \verb|--cni-conf-dir|, tento flag byl ve verzi \verb|1.24| odstraněn. \cite{k8scirobot_2020_merge} ,\cite{thekubernetesauthors_2022_networkPlugins} Cesta k CNI modulům je možné natavit pomocí proměnné prostředí \verb|CNI_PATH| na daném uzlu.
 
 \subsection{Kubernetes Network Custom Resource Definition De-facto Standard}\label{sec:kncrdds}
 Potřeba lépe kontrolovat síťové prostředky uvnitř Podu a přímo možnost vytvářet Pody s více síťovými rozhraními byla diskutovaná na konferenci \textit{KubeCon + CloudNativeCon North America} v proce 2017 v Austinu\cite{woods_2018_a}. Na této konferenci vznikla skupina \textit{NPWG}(Network Plumbing Working Group). NPWG vznikla primárně za účelem umožnit vytváření Podů s více sítovými rozhraními. Cílem skupiny bylo vytvořit specifikaci pro konfiguraci přídavných síťových rozhraní a následně implementovat jednoduché řešení, pro účely prezentace výsledků.
@@ -129,7 +126,7 @@ Zmíněná specifikace, která byla skupinou NPWG se nazývá \textit{Kubernetes
 
 \begin{itemize}
     \item Objekt Network Attachment Definition\\
-    Objekt NAD (Network Attachment Definition) je nový objekt, který specifikace přidává do Kubernetes API. Tento objekt je definován v doméně \verb|k8s.cni.cncf.io|.\footnote{Vysvětlení domény se nachází v implementacní části}. NAD slouží pro definici přídavných síťových rozhraní. Tento objekt obsahuje jediný parametr \verb|.spec.conf|, v tomto parametru lze ukládat informace o přídavném rozhraní. Pro definovaná přídavného rozhraní stačí do zmíněného parametru uložit CNI konfigurační soubor, formou JSON stringu.\\
+    Objekt NAD (Network Attachment Definition) je nový objekt, který specifikace přidává do Kubernetes API. Tento objekt je definován v doméně \verb|k8s.cni.cncf.io|. NAD slouží pro definici přídavných síťových rozhraní. Tento objekt obsahuje jediný parametr \verb|.spec.conf|, v tomto parametru lze ukládat informace o přídavném rozhraní. Pro definovaná přídavného rozhraní stačí do zmíněného parametru uložit CNI konfigurační soubor, formou JSON stringu.\\
     NAD umožňuje ukládat nastavení pro přídavná síťová rozhraní. Při vytváření Podu s přídavnými rozhraními je na NAD objekty odkazováno.
     \item Požadavky pro delegující CNI modul\\
     Network Custom Resource Definition specifikace definuje i základní požadavky pro implementaci takzvané delegující CNI moduly. Delegující CNI moduly označují moduly, které splňují tuto specifikaci. Pro účely práce nejsou tyto požadavky klíčové.    

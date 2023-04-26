@@ -1,0 +1,20 @@
+\begin{lstfloat}
+\begin{lstlisting}[style=mybashstyle,
+caption={Ukázka nastavení proxy Podu},
+label={code:proxyValid}
+]
+# Attach to SH incide the pod
+[1]$ kubectl exec -it sample - proxy -- sh
+
+# Show SoCat process (pid=1)
+[2]$ ps -p 1 -o args
+>>> COMMAND
+>>> socat tcp4-listen:8080,fork tcp4-connect:172.17.16.120:8080
+
+# List network interfaces and IP addresses
+[2]$ ip -br a
+>>> lo        UNKNOWN 127.0.0.1/8 ::1/128 
+>>> eth0@if38 UP      10.244.2.17/24
+>>> net1@if39 UP      10.10.0.32/24
+\end{lstlisting}
+\end{lstfloat}
