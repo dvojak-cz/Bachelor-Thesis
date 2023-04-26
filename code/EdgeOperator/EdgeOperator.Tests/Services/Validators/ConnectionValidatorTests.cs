@@ -39,7 +39,7 @@ public class ConnectionValidatorTests
 
 
     [Fact]
-    public async Task ComponentsAreUp_Should_Return_False_If_Not_All_Required_Components_Are_Up()
+    public void ComponentsAreUp_Should_Return_False_If_Not_All_Required_Components_Are_Up()
     {
         // Arrange
         var validator = _validatorMock.Object;
@@ -53,7 +53,7 @@ public class ConnectionValidatorTests
 
 
     [Fact]
-    public async Task DeviceContainsComponents_Should_Return_False_if_Device_Not_Contains_All_Required_Components()
+    public void DeviceContainsComponents_Should_Return_False_if_Device_Not_Contains_All_Required_Components()
     {
         // Arrange
         var validator = _validatorMock.Object;
@@ -67,7 +67,7 @@ public class ConnectionValidatorTests
 
 
     [Fact]
-    public async Task DeviceExists_Should_Return_False_If_Device_Does_Not_Exists()
+    public void DeviceExists_Should_Return_False_If_Device_Does_Not_Exists()
     {
         // Arrange
         var validator = _validatorMock.Object;
@@ -81,7 +81,7 @@ public class ConnectionValidatorTests
 
 
     [Fact]
-    public async Task DeviceUp_Should_Return_False_If_Device_Is_Down()
+    public void DeviceUp_Should_Return_False_If_Device_Is_Down()
     {
         // Arrange
         var validator = _validatorMock.Object;
