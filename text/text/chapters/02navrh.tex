@@ -40,7 +40,7 @@ Pro účel práce dává smysl stanovit požadavky na hledané řešení. Požad
     \item Oboustrannost komunikace\\
     Komunikace by měla umožňovat oba směry -- z klastru do privátní sítě a z privátní sítě do klastru. I přesto, že jeden ze směrů je umožněn přímo návrhem Kubernetes, tak konfigurace této komunikace není jednoduchá. Proto bude vyžadováno, aby řešení poskytovalo jednoduchý způsob pro komunikaci směrem do klastru.    
     \item Obecnost řešení\\
-    Řešení my mělo pokrýt všechny možné, výše zmíněné, situace - mělo by umožňovat propojení s více privátními sítěmi za použití více než jednoho uzlu.
+    Řešení my mělo pokrýt všechny možné, výše zmíněné, situace -- mělo by umožňovat propojení s více privátními sítěmi za použití více než jednoho uzlu.
     \item Podpora TCP, UDP\\
     Řešení by mělo plně podporovat komunikaci pomocí síťových protokolů TCP a UDP a protokolů z vyšších abstrakčních kategorií
     \item Jednoduchost\\
@@ -51,7 +51,7 @@ Pro účel práce dává smysl stanovit požadavky na hledané řešení. Požad
 \bigskip\medskip
 Zmíněné komunikace lze dosáhnout více způsoby, každý z těchto způsobů má jisté výhody a nevýhody. Jako první se podívám na již existující technologii \textit{Kube~edge}, která by daný problém mohla do jisté míry řešit.
 \section{Řešení pomocí Kube edge}
-Kube edge je projekt společnosti cloud native computing foundation, který rozšiřující Kubernetes pro použití na koncových zařízení (edge devices). Tento projekt je vyvíjen pro potřeby edge cloud computing archytektury systému.\cite{bigelow_2021_what} Cílem projektu kube~edge je usnadnit provoz Kubenets na zařízeních, které mohou mít omezené prostředky, jejich připojení není stále, stabilní a jsou provozovány na různých lokacích. Kube~edge umožňuje tyto zařízení integrovat do existujících Kubernetes klastrů. Díky tomuto lze dobře pracovat s různými zařízeními, jako jsou například IoT zařízení, různé senzory, zařízení pro chytrá města\ldots \cite{kubeedgeprojectauthors_2023_kubeedge}
+Kube edge je projekt společnosti cloud native computing foundation, který rozšiřující Kubernetes pro použití na koncových zařízení (edge devices). Tento projekt je vyvíjen pro potřeby edge cloud computing archytektury systému. \cite{bigelow_2021_what} Cílem projektu kube~edge je usnadnit provoz Kubenets na zařízeních, které mohou mít omezené prostředky, jejich připojení není stále, stabilní a jsou provozovány na různých lokacích. Kube~edge umožňuje tyto zařízení integrovat do existujících Kubernetes klastrů. Díky tomuto lze dobře pracovat s různými zařízeními, jako jsou například IoT zařízení, různé senzory, zařízení pro chytrá města\ldots \cite{kubeedgeprojectauthors_2023_kubeedge}
 
 Kube edge je převážně určen k integraci zařízeních, na kterých je možné provozovat samotné kontejnery a službu kubelet. Primární účel kube edge se tedy neřeší výše popsaný problém, ale je velmi úzce spjatý s komunikací určitých zařízení a interní sítě Kubernetes. Z tohoto důvodu lze v implementaci kuebedge nalést alespoň částečné řešení zmíněného problému a to pro komunikaci za pomocí MQTT protokolu, případně protokolu HTTP.
 
@@ -61,11 +61,12 @@ Pro potřeby komunikace pomocí protokolu HTTP obsahuje Kube edge komponentu Ser
 
 V obou zmíněných případech by kube~edge poskytoval funkci prostředíka komunikace mezi sítí Kubernetes a privátní sítí.
 
-Kube~edge je velmi zajímavá technologie, která je užitečná při integraci koncových zařízení do Kubernetes, ale pro účel propojení klastru s privátní sítí nedostatečná. I přesto, že dnes kube edge nenabízí plné řešení problému, je dost pravděpodobné, že potřebná funkcionalita bude v budoucnu přidána. Cindy Xing (vedoucí projektu kube~edge) a Kevin Wang (co-founder a vývojář kube~edge) na konferencích KubeCon uvedli, že plánují rozšířit projekt tak, aby podporoval více protokoolů a zároveň se chtějí dále věnovat rozšíření stávající infrastruktury pro komunikaci a adresaci služeb (service mesh).\cite{cncfcloudnativecomputingfoundation_2019_intro},\cite{cncfcloudnativecomputingfoundation_2022_intro}
+Kube~edge je velmi zajímavá technologie, která je užitečná při integraci koncových zařízení do Kubernetes, ale pro účel propojení klastru s privátní sítí nedostatečná. I přesto, že dnes kube edge nenabízí plné řešení problému, je dost pravděpodobné, že potřebná funkcionalita bude v budoucnu přidána. Cindy Xing (vedoucí projektu kube~edge) a Kevin Wang (co-founder a vývojář kube~edge) na konferencích KubeCon uvedli, že plánují rozšířit projekt tak, aby podporoval více protokoolů a zároveň se chtějí dále věnovat rozšíření stávající infrastruktury pro komunikaci a adresaci služeb (service mesh). \cite{cncfcloudnativecomputingfoundation_2019_intro}, \cite{cncfcloudnativecomputingfoundation_2022_intro}
+
 \section{Řešení pomocí Proxy}\label{sec:req}
 Popsané možné řešení za pomocí Kube edge zmiňuje využití zmíněních komponent jako prostředníka komunikace. V oblasti síťování se o takovéto službě prostředníka mluví jako o službě Proxy (zkráceně Proxy). Proxy je služba, která umožňuje přistupovat k různým službám skrze Proxy serveru (postředníka). Tato služba plní řadu funkcí. Mimo přeposílání komunikací může poskytovat zabezpečení, filtrovat tok dat, zaznamenávat informace o komunikaci\ldots Proxy servery mohou pracovat na různých vrstvách ISO/OSI modelu, nejčastěji operují na vrstvě čtvrté respektive sedmé, kde často operují s protokoly TCP, UDP respektive HTTP.
 
-Proxy tímto nabízí velmi zajímavou funkcionalitu, která by mohla řešit zmíněný problém. V případě, že by bylo možné jednoduše provozovat Proxy, pak by tato služba mohla sloužit jako most mezi privátní sítí a sítí Kubernetes. Taková služba by běžela právě na jednom z edge uzlů a přeposílat komunikaci do privátní sítě. K tomu, aby toto bylo možné je zapotřebí, aby byli splněny následující požadavky:
+Proxy tímto nabízí velmi zajímavou funkcionalitu, která by mohla řešit zmíněný problém. Pokud, že by bylo možné jednoduše provozovat Proxy, pak by tato služba mohla sloužit jako most mezi privátní sítí a sítí Kubernetes. Taková služba by běžela právě na jednom z edge uzlů a přeposílat komunikaci do privátní sítě. K tomu, aby toto bylo možné je zapotřebí, aby byli splněny následující požadavky:
 
 \begin{itemize}
     \item Schopnost proxy serveru operovat na čtvrté a sedmé vrstvě ISO/OSI modelu
@@ -97,12 +98,12 @@ Pro konfiguraci síťového jemného prostoru poskytuje Kubernetes API pouze jed
 
 Tímto lze jednoduše splnit poslední Podmínku pro provozování proxy jako aplikaci v Kubernetes. Nyní stačí správně spustit a nastavit proxy tak, aby propojovala síť privátní se sítí kubenretes. Tato proxy by běžela v Podu, s nastavenou hodnotou \verb|pod.spec.hostNetwork| na True. Pod by běžel na potřebném edge uzlů.
 
-I přesto, že je tento způsob zcela funkční, nesplňuje požadavek na bezpečnost, který je specifikován v sekci \ref{sec:pozadavky}. Řešení velmi oslabuje virtualizaci, kterou nám kontejnery a Kubernetes poskytuje. Tím je výrazně oslabena bezpečnost tohoto systému. Procesy, běžící v Podu by měli úplný přístup k síťovím prostředlům hostujícího systému. Toto velmi rozšiřuje možnost útoku na hostující systém respektive na prostředí Kubernetes. Používání \verb|pod.spec.hostNetwork| lze označít za ani-pattern, právě kvůli narušení virtualizace. Toto potvrzuje i Mark Betz ve svém blogu \textit{Understanding Kubernetes networking}. 
+I přesto, že je tento způsob zcela funkční, nesplňuje požadavek na bezpečnost, který je specifikován v sekci \ref{sec:pozadavky}. Řešení velmi oslabuje virtualizaci, kterou nám kontejnery a Kubernetes poskytuje. Tím je výrazně oslabena bezpečnost tohoto systému. Procesy, běžící v Podu by měli úplný přístup k síťovím prostředlům hostujícího systému. Toto velmi rozšiřuje možnost útoku na hostující systém respektive na prostředí Kubernetes. Používání \verb|pod.spec.hostNetwork| lze označít za anti-pattern, právě kvůli narušení virtualizace. Toto potvrzuje i Mark Betz ve svém blogu \textit{Understanding Kubernetes networking}. 
 
 \begin{displayquote}
-\uv{In fact I would suggest that they are anti-patterns for 99.99 per cent of use cases, and any implementation that makes use of either should get an automatic design review}\\(Ve skutečnosti bych řekl, že jsou to anti-vzory pro 99,99 procent případů použití, a každá implementace, která je používá, by měla být automaticky přezkoumána.)\cite{betz_2022_understanding} 
+\uv{In fact I would suggest that they are anti-patterns for 99.99 per cent of use cases, and any implementation that makes use of either should get an automatic design review}\\(Ve skutečnosti bych řekl, že jsou to anti-vzory pro 99,99 procent případů použití, a každá implementace, která je používá, by měla být automaticky přezkoumána.) \cite{betz_2022_understanding} 
 
-\uv{I don’t think it’s a stretch to suggest that you are never, ever going to need to do this.}\\(Nemyslím si, že by bylo přitažené za vlasy naznačovat, že to nikdy, nikdy nebudete muset udělat.)\cite{betz_2022_understanding} 
+\uv{I don’t think it’s a stretch to suggest that you are never, ever going to need to do this.}\\(Nemyslím si, že by bylo přitažené za vlasy naznačovat, že to nikdy, nikdy nebudete muset udělat.) \cite{betz_2022_understanding} 
 \end{displayquote}
 
 
@@ -115,10 +116,10 @@ Předchozí sekce ukazuje, jakým způsobem lze v Podu přistupovat k sítovým 
 
 Již v teoretické části bylo zmíněno, že Kubernetes k síťování používá CNI standardu. CNI definuje formát souboru, kterým lze definovat a konfigurovat jak mají být dané CNI moduly používány. Jedná se o informace ve formě JSON souboru, který je uložen na disku dané serveru (pracovního uzlu). Tento soubor se nachází v \verb|/etc/cni/net.d/| na každém funkčním severu, který je součástí klastru. Název souboru není nijak omezen. Kubernets pracuje vždy se souborem, který se nachází v příslušném adresáři a je první dle abecedního pořadí. Zmíněná konfigurace nese informace o verzi CNI a jménu CNI modulu, který má být využíván. Samotné moduly jsou ve výchozím nastavení ukládány do \verb|/opt/cni/bin|. 
 
-V dřívějších verzích Kubernetes bylo možné definovat cestu k adresáři s konfigurací pomocí \verb|--cni-conf-dir|, tento flag byl ve verzi \verb|1.24| odstraněn. \cite{k8scirobot_2020_merge} ,\cite{thekubernetesauthors_2022_networkPlugins} Cesta k CNI modulům je možné natavit pomocí proměnné prostředí \verb|CNI_PATH| na daném uzlu.
+V dřívějších verzích Kubernetes bylo možné definovat cestu k adresáři s konfigurací pomocí \verb|--cni-conf-dir|, tento flag byl ve verzi \verb|1.24| odstraněn. \cite{k8scirobot_2020_merge} , \cite{thekubernetesauthors_2022_networkPlugins} Cesta k CNI modulům je možné natavit pomocí proměnné prostředí \verb|CNI_PATH| na daném uzlu.
 
 \subsection{Kubernetes Network Custom Resource Definition De-facto Standard}\label{sec:kncrdds}
-Potřeba lépe kontrolovat síťové prostředky uvnitř Podu a přímo možnost vytvářet Pody s více síťovými rozhraními byla diskutovaná na konferenci \textit{KubeCon + CloudNativeCon North America} v proce 2017 v Austinu\cite{woods_2018_a}. Na této konferenci vznikla skupina \textit{NPWG}(Network Plumbing Working Group). NPWG vznikla primárně za účelem umožnit vytváření Podů s více sítovými rozhraními. Cílem skupiny bylo vytvořit specifikaci pro konfiguraci přídavných síťových rozhraní a následně implementovat jednoduché řešení, pro účely prezentace výsledků.
+Potřeba lépe kontrolovat síťové prostředky uvnitř Podu a přímo možnost vytvářet Pody s více síťovými rozhraními byla diskutovaná na konferenci \textit{KubeCon + CloudNativeCon North America} v proce 2017 v Austinu  \cite{woods_2018_a}. Na této konferenci vznikla skupina \textit{NPWG}(Network Plumbing Working Group). NPWG vznikla primárně za účelem umožnit vytváření Podů s více sítovými rozhraními. Cílem skupiny bylo vytvořit specifikaci pro konfiguraci přídavných síťových rozhraní a následně implementovat jednoduché řešení, pro účely prezentace výsledků.
 
 Zmíněná specifikace, která byla skupinou NPWG se nazývá \textit{Kubernetes Network Custom Resource Definition De-facto Standard}. Tento standard slouží pro definici objektů a API pro vývojáře, kteří chtějí umožnit rozšířit standardní chování Kubernetes, o Podu s více sítovými rozhraními. Specfikace definuje následující:
 

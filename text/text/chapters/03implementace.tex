@@ -61,7 +61,7 @@ V předešlé kapitole jsou deklarovány požadavky na hledané řešení probl�
 I přesto tuto snahu dává smysl se omezit na určitý způsob použití výsledného rozšíření. Tato omezení jsou použita zejména pro umožnění automatizace práce formou operátoru. Automatizace bude popsána v sekci \ref{sec:operator} zabývající se rozšířením Kubernets. Pro každé zmíněné omezení bude nabídnuta alternativa, která dané omezení umožňuje realizovat. 
 
 \subsubsection*{Podpora protokolů}
-V požadavcích pro řešení problému je zmíněná podpora TCP, UDP a HTTP protokolu. TCP a UDP protokoly se nachází na stejné abstrakční vrstvě dle ISO/OSI modelu. Protokol HTTP se nachází na vrstvě sedmé, nejvyšší abstrakční vrstvě. Tento protokol se spoléhá na zmíněné protokoly TCP a UDP. Dnes používané verze HTTP (verze v1 a v2) jsou provozovány za pomocí TCP protokolu. Verze v3 protokolu HTTP je stále vyvíjena, dnešní návrh počítá, že protokol bude využívat QUIC protokol, který je postaven na UDP.\cite{fesl_2021_aplikan}.
+V požadavcích pro řešení problému je zmíněná podpora TCP, UDP a HTTP protokolu. TCP a UDP protokoly se nachází na stejné abstrakční vrstvě dle ISO/OSI modelu. Protokol HTTP se nachází na vrstvě sedmé, nejvyšší abstrakční vrstvě. Tento protokol se spoléhá na zmíněné protokoly TCP a UDP. Dnes používané verze HTTP (verze v1 a v2) jsou provozovány za pomocí TCP protokolu. Verze v3 protokolu HTTP je stále vyvíjena, dnešní návrh počítá, že protokol bude využívat QUIC protokol, který je postaven na UDP. \cite{fesl_2021_aplikan}.
 
 Pro potřeby práce bude navrhované řešení zaměřeno převážně na komunikaci pomocí protokolů TCP a UDP. Toto je možné, jelikož nalezení řešní pro tyto dva protokoly implikuje i podporu HTTP. Přímo podpora protokolu HTTP bude diskutována v sekci níže. Jeho podpora může přinést zajímavé možnosti rozšíření funkcionality. Jeho podpora ale výrazně komplikuje konfiguraci a návrh řešení a pro automatizaci práce není vhodná.
 
@@ -73,7 +73,7 @@ Aplikaci poskytující službu proxy bude použita pro samotné propojení sít�
 
 Jelikož je služba proxy dlouho známí a často používaný koncept, aplikací poskytující tuto službu je celá řada. Z tohoto důvodu nedává smysl vyvíjet nové vlastní řešení. Namísto toho lze využít již existujících implementací. Mezi známe implementace, které splňují výše deklarované požadavky patří například: HAProxy, Nginx, Envoy, SoCat. Právě SoCat byl vybrán jako vhodná pro provoz služby proxy.
 
-SoCat je nástroj vyvinutý společností redhead pro přenost dat. Tento nástroj je navržen tak, aby byl velmi jednoduchý a zároveň vysoce konfigurovatelný, což nabízí velké možnosti použití. Jedno z možných použití je i poskytování TCP respektive UDP proxy.\cite{amoany_2020_getting}
+SoCat je nástroj vyvinutý společností redhead pro přenost dat. Tento nástroj je navržen tak, aby byl velmi jednoduchý a zároveň vysoce konfigurovatelný, což nabízí velké možnosti použití. Jedno z možných použití je i poskytování TCP respektive UDP proxy. \cite{amoany_2020_getting}
 
 SoCat je velmi známy a minimalistycký nástroj. Díky tomu je velmi jednoduchý na použití a vhodný na provoz v kontejneru. SoCat je zároveň dostupný, jako veřejný obraz kontejneru na platformě Docke~Hub. Z tohoto je velmi vhodným řešením pro provoz v rámci klastru kubernetes.
 
@@ -96,7 +96,7 @@ Tento standard deklaruje API rozhraní pro popis přídavných síťových rozhr
 
 Multus je gelegujících plugin, který je vyvíjen přímo skupinou Network Plumbing Working Group, která spravuje zmíněný standard. Multus není přímo implementace CNI, projekt je označován jako takzvaný meta-plugin. \cite{hayashi_2019_multuscni}
 
-Multus byl navržen jako zásuvný modul, který rozšiřuje základní Kubernetes CNI o funkci tvorby podu s více rozhraní. Této možnosti je dosaženo tím, že Multus umožňuje volání více implementací CNI standardu. Při použití to znamená, že Multus volá takzvaný \uv{hlavní} CNI modul (defaultní, pro umožnění komunikace v klastru) a následně \uv{vedlejší} modul, který do Podu vloží a nastaví přídavné rozhraní. Tímto způsobem je umožněno tvořit Pody s více síťovými rozhraními.\cite{hayashi_2019_multuscni}
+Multus byl navržen jako zásuvný modul, který rozšiřuje základní Kubernetes CNI o funkci tvorby podu s více rozhraní. Této možnosti je dosaženo tím, že Multus umožňuje volání více implementací CNI standardu. Při použití to znamená, že Multus volá takzvaný \uv{hlavní} CNI modul (defaultní, pro umožnění komunikace v klastru) a následně \uv{vedlejší} modul, který do Podu vloží a nastaví přídavné rozhraní. Tímto způsobem je umožněno tvořit Pody s více síťovými rozhraními.. \cite{hayashi_2019_multuscni}
 
 Způsob konfigurace přídavných síťových rozhraní je popsán již ve specifikaci Kubernetes Network Custom Resource Definition De-facto Standard. Více informací o standardu je popsáno v \ref{sec:kncrdds} části této práce.
 
@@ -104,7 +104,7 @@ Právě Multus je použit jako způsob umožnující tvorbu podu s Více rozhran
 
 
 
-%This is accomplished by Multus acting as a "meta-plugin", a CNI plugin that can call multiple other CNI plugins.\\Dokumentace uvádí termín "hlavní" modul a "delegovaný" modul. Hlavní modul je zodpovědný za síťování uvnitř interní sítě Kubernetes.\\deleguje konfiguraci a přidělení síťových rozhraní na další CNI zásuvné moduly. Tímto způsobem Multus CNI funguje jako takový orchestrátor pro ostatní CNI zásuvné moduly, umožňujíc současnou práci s více různými sítěmi. Toto chování je umožněno především tím, že specifikace CNI možnost delegace práce mezi pluginy. Toto je popsáno zmíněno v první kapitole v sekci popisující standard. Pro zjedudušení by se dalo říct, že při vzniku Podu multus vždy volá "hlavního" CNI a pokud Pod definuje, tak i všechny delegované moduly. Tento způsob umožňuje tvorbu Podů s více síťovími rozhraními. Zároveň se jedná o velmi elegantní řešení, jelikož poskytuje velkou volnost použití a nijak neomezuje standartní síťování. Multus je velmi dobrou volbou pro řešení problému.  Konrétní použití je uvedeno v sekci \ref{prostredi}
+%This is accomplished by Multus acting as a \uv{meta-plugin}, a CNI plugin that can call multiple other CNI plugins.\\Dokumentace uvádí termín \uv{hlavní} modul a \uv{delegovaný} modul. Hlavní modul je zodpovědný za síťování uvnitř interní sítě Kubernetes.\\deleguje konfiguraci a přidělení síťových rozhraní na další CNI zásuvné moduly. Tímto způsobem Multus CNI funguje jako takový orchestrátor pro ostatní CNI zásuvné moduly, umožňujíc současnou práci s více různými sítěmi. Toto chování je umožněno především tím, že specifikace CNI možnost delegace práce mezi pluginy. Toto je popsáno zmíněno v první kapitole v sekci popisující standard. Pro zjedudušení by se dalo říct, že při vzniku Podu multus vždy volá \uv{hlavního} CNI a pokud Pod definuje, tak i všechny delegované moduly. Tento způsob umožňuje tvorbu Podů s více síťovími rozhraními. Zároveň se jedná o velmi elegantní řešení, jelikož poskytuje velkou volnost použití a nijak neomezuje standartní síťování. Multus je velmi dobrou volbou pro řešení problému.  Konrétní použití je uvedeno v sekci \ref{prostredi}
 
 \subsection{Ukázka nastavení proxy}\label{ukazkaProxy}
 Pomocí služby SoCat a modulu Multus je již možné vytvořit funkční způsob pro komunikaci se zařízeními v privátních sítích. Pro snadnější pochopení, jakým způsobem je adresace v privátních sítích umožněna bude řešení ukázáno na konkrétním příkladu.
@@ -148,7 +148,7 @@ V případě implementace podpory obousměrné adresace se nabízí i poskytnout
 \section{Rozšíření Kubernetes}\label{sec:extend}
 Kubernets je velmi dobře navržen proto, aby byl jednoduše rozšiřitelný. Na oficiálních stránkách projektu Kubernets je uvedeno: 
 \begin{displayquote}
-\uv{Kubernetes is highly configurable and extensible. As a result, there is rarely a need to fork or submit patches to the Kubernetes project code.}\\(Kubernetes je vysoce konfigurovatelný a rozšiřitelný. Díky tomu je jen zřídka potřeba kód projektu Kubernetes forkovat nebo zasílat záplaty.)\cite{thekubernetesauthors_2022_kubernetes}
+\uv{Kubernetes is highly configurable and extensible. As a result, there is rarely a need to fork or submit patches to the Kubernetes project code.}\\(Kubernetes je vysoce konfigurovatelný a rozšiřitelný. Díky tomu je jen zřídka potřeba kód projektu Kubernetes forkovat nebo zasílat záplaty.) \cite{thekubernetesauthors_2022_kubernetes}
 \end{displayquote}
 
 V případě potřeby, Kubernetes nabízí způsoby, kterým lze systém rozšířit. Dokumentace projektu popisuje různé potřeby pro rozšíření systému a zároveň odkazuje na způsoby, jak toho dosáhnout. Pro účely této práce je důležitá sekce popisující rozšiřování Kubernetes API, automatizace práce a rozšíření síťování.\textbf{CITOVAT}
@@ -209,7 +209,7 @@ Connection represents a connection between a device and Kubernetes cluster. By c
 \subsection{Automatizace práce - Operátor}\label{sec:operator}
 Objekty slouží jako datové struktury pro ukládaní informací o stavu klatru. Tyto objekty jsou zpracovávány pomocí Kubernetes kontrolerů. Kontrolery jsou nekonečné smyčky, které mají za úkol udržovat klastr v požadovaném stavu, který je definovaný pomoc9 objektů uložených v \textit{etcd} databázi. Kontrolery lze chápat jako pracovníky, kteří spravují celý systém Kubernetes. Oficiální dokumentace uvádí příklad na termostatu. Termostat je typicky nastaven na fixní požadovanou teplotu, kterou má za úkol v místnosti udržet. V případě, že teplota klesne Pod požadovanou hladinu, pak provede potřebné kroky pro zvýšení teploty v místnosti na požadovanou teplotu. Stejným způsobem fungují kontrolery v systému Kuberneets. Neustále porovnávají aktuální stav klastru se stavem požadovaným (definovaným objekty). V případě že se tyto dva stavy liší, pak se pokusí aktuální stav klastru co nejvíce přiblížit stavu požadovanému. Tyto kontrolery jsou najčastěji provozovány formou malých aplikací.
 
-Funkce kontroleru je pěkně ilustrována na následujícím příkladu zdrojového kódu.\cite{nguyen_2017_a}
+Funkce kontroleru je pěkně ilustrována na následujícím příkladu zdrojového kódu. \cite{nguyen_2017_a}
 \input{text/code/sample_controller}
 
 Stejně jako Kubernetes nabízí základní skupinu standardních objektů, tak nabízí i standardní množinu kontrolerů. Tyto kontrolery jsou spravovány vývojáři Kubernetes a jsou součástí základní instalace systému. Příkladem těchto kontrolerů jsou Deployment Controller, Endpoint Controller, Namespace controler\ldots Zmíněný výčet je velmi podobný výčtu objektů v předchozí kapitole. Je tomu tak, jelikož zmíněné kontrolery implementují logiku pro práci právě s danými objekty. Kontrolery společně s objekty tvoří základní stavební bloky Kubernetes, které představují způsob, jakým je Kubernetes navržen. Tento koncept lze přirovnat k návrhovému vzoru, který usnadňuje správu a škálování aplikací v kontejnerech prostřednictvím abstrakce a deklarativního přístupu. Tento způsob zároveň umožňuje snadnou rozšiřitelnost.
@@ -244,17 +244,22 @@ Nejčastěji je operátor tvořen kombinací CRD a kontroleru, který zpracováv
     \end{itemize}
 \end{itemize}
 Návrhový vzor operátor je velmi pěkně navrhnut a rozmyšlen, pro detailnějsí pochopení vzoru doporučuji blog \href{https://iximiuz.com/en/posts/kubernetes-operator-pattern/}{\textit{Exploring Kubernetes Operator Pattern}}, oficiální dokunetaci Kubernetes a předášku \href{https://youtu.be/KBTXBUVNF2I}{\textit{Tutorial: Zero to Operator in 90 Minutes!}} od \textit{Solly Ross}
-\cite{bhler_2021_kubeops},
-\cite{kaplan_2022_argocd},
-\cite{velichko_2021_exploring},
-\cite{cncfcloudnativecomputingfoundation_2020_tutorial}
+ \cite{bhler_2021_kubeops},
+ \cite{kaplan_2022_argocd},
+ \cite{velichko_2021_exploring},
+ \cite{cncfcloudnativecomputingfoundation_2020_tutorial}
 
 \subsubsection{Oprátor edge-operaotr}
-Poslední částí implementace je realizace operátoru, který bude automatizovat všechny\\
-aktivity\\
-.NET - mam nejvice zkusenosti\\
-chyby v knihovne - chci opravit\\
-bude prepsano v GO\\
-Dodrzije strukturu .net API\\
+Poslední částí implementace je realizace operátoru, který bude automatizovat všechny
+
+aktivity
+
+.NET - mam nejvice zkusenosti
+
+chyby v knihovne - chci opravit
+
+bude prepsano v GO
+
+Dodrzije strukturu .net API
 
 \section{Ukázka}

@@ -22,6 +22,12 @@ Tato práce vnikla pro potřeby HIL\footnote{HIL (hardware in loop) je technika 
 Cílem této práce je najít způsob, jakým zajistit adresaci a komunikaci s hardwarovými prvky, nacházející se mimo síť kubernetes. Zkoumána bude komunikace protokoly \textit{TCP} , \textit{UDP} a \textit{HTTP}. V případě, že nebude známo žádné řešení, které by splnilo kladené nároky, pak je za cíl návrh a implementace řešení pro výše popsaný problém.
 
 \section{Struktura práce}
+Práce je strukturována celkem do tří kapitol. První kapitola představuje základní koncepty systému Kubernetes. Hlavní část bude věnována možnostem síťování, které tento systém nabízí. Informace obsažené v teoretické části slouží jako stavební bloky pro zbytek této práce.
+
+Druhá kapitola je věnována samotnému problému adresace zařízeních v přilehlé interní síti cloudu. Zde je problematika představena převážně na teoretické úrovni. V této části jsou diskutovány možná řešení.
+
+Poslední, třetí kapitola popisuje realizaci řešení představeného v kapitole předchozí. Zde je popsáno prostředí použité při realizaci, konkrétní způsob podpory komunikace a implementace rozšíření systému Kubernetes.
+
 \section{Dohoda se čtenářem}
 V této práci se budou často vyskytovat názvy objektů z systému Kubernetes. Tyto objekty budou uvedeny s velkými počátečními písmeny. Toto je zavedená konvence proto, aby se názvy objektů nepletli se slovy běžného jazyka. Tato konvence dává dobrý smysl zejména v anglicky psané literatuře, i přesto, že tato práce je psaná v jazyce českém, bude tato konvence dodržována. Příkladem objektu může být objekt typu Deployment s velkým \'D\'.
 
@@ -29,7 +35,7 @@ Základní pojmy, které jsou v práci použity se nachází na začátku této 
 
 V případě, že se jedná o ukázku z příkazové řádky, bude použit specifický blok. Ukázkový blok je uveden ve výpisu kódu \ref{sample:cmd}.
 
-Pokud se příkazy provádějí v různých prostředích, budou prostředí uvedena v hranatých závorkách. Pokud je prostředí jednotné, bude použit symbol podtržítka. Příkazy vždy načínají symbolem "\verb|$|", výstupy konzole jsou uvedeny symbolem "\verb|>>> |".
+Pokud se příkazy provádějí v různých prostředích, budou prostředí uvedena v hranatých závorkách. Pokud je prostředí jednotné, bude použit symbol podtržítka. Příkazy vždy načínají symbolem \verb|$|, výstupy konzole jsou uvedeny symbolem \verb|>>> |.
 \input{text/code/sample_cmd}
 
 Příkazy z těchto bloků jsou převeditelné na script pomocí následujícího příkazu \ref{cmd:exec} 
