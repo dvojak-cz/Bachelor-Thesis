@@ -17,7 +17,9 @@ public class ProxyContainerBuilder : IProxyContainerBuilder
     public ProxyContainerBuilder(IOptions<ProxyTemplateOption> proxyTemplateOption)
     {
         _proxyTemplateOption = proxyTemplateOption.Value;
-        Reset();
+        _containers = new List<V1Container>();
+        _port = _proxyTemplateOption.BasePort;
+        _portsMapper = new Dictionary<DeviceEntity.DeviceSpec.Component.Handler, int>();
     }
 
     /// <inheritdoc />
