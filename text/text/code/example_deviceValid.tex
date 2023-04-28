@@ -1,0 +1,25 @@
+\begin{lstfloat}
+\begin{lstlisting}[
+style=mybashstyle,
+caption={Definice connection - device01-01},
+label={sample:deviceValid}
+]
+[_]$ cat > device.yaml <<EOF
+apiVersion: edge-operator.k8s.dvojak.cz/v1
+kind: Device
+metadata:
+  name: device01-01
+spec:
+  nodeName: kedge1
+  ipAddress: 172.17.16.120
+  components:
+    - name: tcp-udp-stream
+      handlers:
+        - {'name':<~>'tcp', 'port':<~>8080}
+        - {'name':<~>'udp', 'protocol':<~>'UDP', 'port':<~>9090}
+    - name: http
+      handlers:
+        - {'name':<~>'http','protocol':<~>'HTTP', 'port':<~>8000}
+EOF
+\end{lstlisting}
+\end{lstfloat}

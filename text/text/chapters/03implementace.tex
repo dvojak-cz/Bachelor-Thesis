@@ -17,7 +17,7 @@ Pro účely vývoje byly vytvořeny celkem čtyři virtuální stroje. Každé z
 Kompletní konfigurace virtuálního prostředí je definována v souboru \verb|vagrant/Vagrantfile|. Tento soubor je parametrizovatelný pro potřeby úpravy prostředí. 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.7\textwidth]{images/lab.png}
+    \includegraphics[width=0.7\textwidth]{images/lab.pdf}
     \caption{Caption}
     \label{fig:lab}
 \end{figure}
@@ -167,7 +167,7 @@ Velká část systému Kubernetes se skládá z definic objektů. Kubernetes obj
 Kubernetes poskytuje základní objekty pro práci s klastrem. Příklady těchto objektů jsou Pod, Deployment, Endpoint, Namespace... Tyto objekty jsou navrženy a spravovány autory Kubernetes. Jedním ze standartích objektů je i CustomResourceDefinition. CustomResourceDefinition (zkráceně CRD) je meta-objekt, který umožňuje definovat vlastní nové objekty. CRD pak umožňuje definovat strukturu nových objektů (datových struktur). Příkladem použití CRD je již zmíněný Network Attachment Definition, který byl definovaný v dokumentu Kubernetes Network Custom Resource Definition De-facto Standard. V případě, že je nový CRD objekt vytvořen, je tento objekt přidán do Kubernetes API a tím je možné s ním Kubernetes pracovat. Pro nový datový objekt jsou automaticky vytvořeny základní CRUD operace.
 
 CustomResourceDefinition poskytuje velmi elegantní způsob a jakým lze rozšiřovat Kubernetes API o nové objekty.  
-\subsubsection{Návrh vlastních CRD objektů}
+\subsubsection{Návrh vlastních CRD objektů}\label{CRDDEF}
 Jedním z požadavků zmíněných v sekci \ref{sec:pozadavky} je Jednoduchost. Pro jednoduchost je požadováno, aby řešení podporovalo zavedené způsoby komunikace s klastrem. Toho lze velmi dobře dosáhnout právě za použití CRD. Navržením nových objektů rozšíří standartní API Kubernetes dobře rozšířit API Kubernetes. S nově vzniklými objekty lze následně pracovat pomocí operátorů (popáno v další sekci). Tento způsob zároveň přináší řadu výhod a usnadnění. Jelikož se o správu objektů stará přímo Kubernetes, můžeme se spolehnout na persistenci dat, která vychází z vlastností databáze etcd, tato databáze bude řešit i kolize, které mohou vzniknout při souběžném přístupu k datům. Další výhoud je, že tyto objekty budou dokumentovány standartním způsobem kuebrneets. O jejich validaci se z velké části bude starat Kubernetes API server. Jelikož tento způsob nabízí celou řadu výhod a zároveň splňuje požadavek pro jednoduchost, je vhodným pro účely řešení problému.
 
 Nyní se zaměříme pouze na návrh CRD objektů pro účely řešení problému. Tyto objekty budou tvořit kompletní API pro ovládání tvořeného rozšíření Kubernetes.
@@ -249,17 +249,41 @@ Návrhový vzor operátor je velmi pěkně navrhnut a rozmyšlen, pro detailněj
  \cite{velichko_2021_exploring},
  \cite{cncfcloudnativecomputingfoundation_2020_tutorial}
 
-\subsubsection{Oprátor edge-operaotr}
-Poslední částí implementace je realizace operátoru, který bude automatizovat všechny
+\subsubsection{Oprátor edge-operatrot}
+Poslední částí implementace je realizace operátoru, který bude pracovat s výše vydefinovanými CRD a automatizovat tvorbu proxy Podu, jak je ukázáno v sekci \ref{ukazkaProxy}. Od této chvíle bude tento operátor označován jako edge-operator.
 
-aktivity
+Oficiální dokumentace Kubernetes vybízí k použiti některé z frameworků pro implementaci operátorů. frameworků pro realizaci operátoru je celá řada, Kubernetes na svých stránkách uvádí tyto příklady: \textit{kubebuilder} (GO), \textit{KubeOps} (.NET), \textit{kube-rs} (Rust) a \textit{Java Operator SDK}. Pro implementaci operátoru edge-operatrot byl použit \uv{KubeOps - The dotnet Kubernetes Operator SDK}.\footnote{https://github.com/buehler/dotnet-operator-sdk}
 
-.NET - mam nejvice zkusenosti
+KubeOps je framework obsahující sadu nástrojů pro implementaci operátoru v prostředí .NET. Jedná se o udržovaný projekt, který je stále vyvíjen. Jeho autor udává, že projekt je silně inspirován projektem kubebuilder. KubeOps je implementován v nejnovější verzi freamworku s dlouhodobou podporou \verb|.NET 7|. Implementace KubeOps hojně využívá technologii \verb|APS.NET|, která slouží pro vývoj webových služeb. Použití zmíněné technologie pro tvorbu webu jako základ pro realizaci operátorů dává velký smysl, jelikož právě \verb|APS.NET| je dle průzkumu \textit{Stack Overflow Developer Survey 2022} nejpoužívanější technologií pro vývoj webových backendových aplikací profesionálním vývojáři. \footnote{https://survey.stackoverflow.co/2022/\#most-popular-technologies-webframe-prof} Toto velmi zpřístupňuje možnost implementace operátorů.
 
-chyby v knihovne - chci opravit
+V následujících sekcích bude krátce vysvětlen mechanizmus fungování operátoru edge-operator a stručně nastíněn způsob, kterým byl operátor implementován pomocí KubeOps freamworku.
 
-bude prepsano v GO
+\subsubsection*{CRD}
+První s čím se uživatel operátoru setká jsou CRD Device a Connection. Jedná se o objekty, které definovány v sekci \ref{CRDDEF}. Tyto objekty jsou v operátoru definovaný pomocí tříd, které korespondují navrženému API. Mimo standardní datové typy a kontrukce, které nabízí jazyk \verb|C#|, jsou k definici použity i atributy (anotace), které nabízí freamwork KubeOps. Tyto atributy slouží převážně k dodefinování metadat o objektu, jako je dokumentace a podoba specifikace výseledných CRD.
 
-Dodrzije strukturu .net API
+Objekty jsou definovány pomocí tříd \verb|DeviceEntity| a \verb|ConnectionEntity|, které dědí příslušné třídy z KubeOps.
 
-\section{Ukázka}
+\subsubsection*{Validátor}
+Edge-operator implementuje validátor pro každý ze zmíněných objektů. Oba tyto validátory slouží pro kontrolu správnosti definic objektů. Tato kontrola probíhá vždy, když je jeden z objektů vytvořen, nebo modifikován. Kontrolované vlastnosti objektů jsou detailně popsány v dokumentaci projektu. 
+
+Ve výchozím nastavení, operátor zamítne požadavek pro vytvoření respektive editaci objektu v případě, že objekt nesplní jednu z kontrolovaných vlastností. V případě potřeby je možné operátor přepnout do ne-striktního módu validace. V takovém případě, kdy je porušena některá z požadovaných vlastností objektu, operátor pouze informuje o jaká porušení se jedná a požadavek nezamítne. Po provedení požadavku jsou data propsána do interní Kubernetes databáze etcd. Tento mód není určen pro reálné nasazení, jelikož může docházet k nedefinovanému chování. To vede k nekonzistenci stavu klaudu, tyto nekonzistence můžou vyžadovat přímí zásah administrátora do vnitří logyky fungování operátoru.
+
+Validátory jsou realizovány pomocí tříd \verb|DeviceEntityValidator| a\\\verb|ConnectionEntityValidator|. Tyto třídy implementují rozhraní dodávaná KubeOps. Realizace validátorů je umožněna díky takvaných webhooks, která Kubernetes poskytuje. V zásadě se jedná o callback, který je volán komponentou kube-api. 
+
+\subsubsection*{Kontroler}
+Hlavní částí edge-operator kontroler objektu \textit{Connection}. Implementace tohoto kontroleru automatizuje vytváření služeb proxy, která umožňují samotnou komunikaci. Jedná se o automatizaci kroků, které jsou uvedeny v sekci \ref{ukazkaProxy} této kapitoly.
+
+Samotný kontroller implementuje metoody Reconcile a Delete kontrolleru. Tyto metody se spoléhají na korektní definicy CRD objektů, pro správné fungování je vyžadováno, aby databáze etcd obsahovala objekty, které jsou validní dle výše popsaného validátoru.
+
+Reconcile metoda implementuje logiku pro vytváření nový spojení a udržování již existujících spojení (Connection). Při vzniku nového spojení (vytvoření objektu Connection) metoda vytvoří obejkt Deployment zaobalující objekt Pod, který slouží jako proxy služba do privátní sítě k danému zařízení. Pro každé spojení je vytvořen právě jeden Pod. Každá handler definovaný v objektu Device odpovídá jednomu kontejneru běžícímu ve vytvořeném podu. Mimo deployment vyváří kontroller i objekt Service, díky které umoňuje adresovat daná zařízení pomocí DNS jména. Registrované DNS jméno zařízení, ve výchozím konfiguraci, odpovídá \verb|dop-<name_of_service>|. Vystavené porty objektem Service odpovídají portům na daném zařízení. 
+
+Druhou implementovanou funkcionalitou je Delete. Tato metoda je volána vždy, když dojde ke smazání objektu Service.
+
+Kontroller je konfigurovatelný, díky tomuto je možné upravit jeho chování konkrétním potřebám užití. Implementace kontrolleru je součástí třídy \verb|ConnectionController|. 
+
+\subsubsection*{Instalace a ukázka použití operátoru}
+Zdrojový kód operátoru edge-operator je veřejně dostupný na platformě GitHub v repozitáři \verb|dvojak-cz/Bachelor-Thesis|. Teto repozitár obsahuje mimo zkdojvého kódu i definice prostředí (popsáno výše), dokumentaci k operátoru a vše ostatní spjaté s touto prací.
+
+Pro jednoduché nasazení a použití operátoru lze využít dokumentaci na webu\\\href{https://bt.project.dvojak.cz/}{\textit{bt.project.dvojak.cz}}. Instalace operátoru je umožněna pomocí sady konfigurovatelných manifestů, které jsou součástí každého release daného repoziáře. Potřebné kontejnery pro testování a instacaci operátoru jsou dosupné v kontejnerovém repozitáři GitHub.
+
+Zmíněná dokumentace obsahuje i příklad použití samotného kontrolleru. Definice objektů jsou dosupné v repozitáři.  

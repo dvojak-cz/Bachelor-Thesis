@@ -68,7 +68,7 @@ Výše popsaný postupu odpovídá implementace pro docker pomocí sítového ov
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.9\textwidth]{images/ContainerNetworking.png}
+\includegraphics[width=0.98\textwidth]{images/router.png}
 \caption[Schéma síťování pro ovladač bridge v docker]{Schéma síťování pro ovladač bridge v docker \cite{velichko_2020_connecting}}\label{img:ContainerNetworking}
 \end{figure}
 
@@ -164,7 +164,7 @@ Při vzniku Podu se vytváří tři jmenné prostory procesů, které jsou sdíl
 a jmenného prostoru přístupových bodů (mnt namespace). Problematika je výborně ilustrována na schématu \ref{img:podSchema} od Ivan Velichko.
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.9\textwidth]{images/podSchema.png}
+\includegraphics[width=0.9\textwidth]{images/pod.png}
 \caption[Schéma jmenných prostorů v Podu]{Schéma jmenných prostorů v Podu \cite{velichko_2021_kubernetes}}\label{img:podSchema}
 \end{figure}
 
@@ -290,7 +290,7 @@ První způsob, kterým lze kontrolovat routování je DNS jméno, které je pou
 
 Druhý způsob routování, které je možné specifikovat pomocí Ingress jsou cesty. V kontextu Ingress cesta označuje část URI dle RFC 3986, která je označovaná jako \uv{path}. Díky tomuto lze oddělit například verze aplikací. Takové použití by mohlo vypadat tak, že \textit{back-end.example.com/v1} bude odkazovat na verzi jedna aplikace a \textit{back-end.example.com/v2} bude odkazovat na verzi 2. Při konfiguraci lze cesty lze specifikovat, zda danému pravidlu mají odpovídat všechny cesty s daným prefixem, nebo pouze cesty, které přesně odpovídají danému vzoru. Případně lze určit, že pravidlo pro cestu má být takzcaně implementačně specifické. V tomto případě je chování definované samotnou implementací kontrolleru. \cite{thekubernetesauthors_2022_ingress}. Výše popsané způsoby routování lze kombinovat
 
-Toto jsou způsoby definice routování, které Ingress nabízí. Ve chvíli, kdy ingerss přijme požadavek, který uspokojí vydefinovaná pravidla, pak přeposílá požadavek dále do klastru a plní tak funkci reverse proxy. Ingress je určen k tomu, aby požadavky přeposílal na objekty Service. Tyto požadavky jsou pak díky Service doručeny na potřebné Pody a aplikace běžící uvnitř. Reference na tyto Service jsou součástí zmíněných pravidel pro routování. I přesto, že Ingress je myšlen převážně pro poskytovaná proxy proxy pro Service, je možné využít i pro libovolně jiné účely. I přesto, že toto použití je nestandardní, Ingress API je pro tyto účely připraveno.\
+Toto jsou způsoby definice routování, které Ingress nabízí. Ve chvíli, kdy ingerss přijme požadavek, který uspokojí vydefinovaná pravidla, pak přeposílá požadavek dále do klastru a plní tak funkci reverse proxy. Ingress je určen k tomu, aby požadavky přeposílal na objekty Service. Tyto požadavky jsou pak díky Service doručeny na potřebné Pody a aplikace běžící uvnitř. Reference na tyto Service jsou součástí zmíněných pravidel pro routování. I přesto, že Ingress je myšlen převážně pro poskytovaná proxy proxy pro Service, je možné využít i pro libovolně jiné účely. I přesto, že toto použití je nestandardní, Ingress API je pro tyto účely připraveno.
 
 \subsubsection{Šifrování pomocí Ingress}
 Doposud popsaná funkce routování je závislá na datech HTTP protokolu. V případě, komunikace není zabezpečena, pak jsou tyto data volně dostupná a Ingress s nimi může pracovat. V případě, že by byla komunikace mezi klientem a aplikací v Kubernets šifrovaná pomocí TLS, nemůže Ingress parametru v HTTP datech vyříst (pokud nemá přístup ke klíčům, použitý pro šifrování). Z tohoto důvodu nabízí ingess i možnost zprostředkování TLS šifrování pro komunikaci mezi klienty a samotným Ingress objektem. Delegace šifrování na samotný Ingress má dvě zásadní výhody, oproti šifrování až na straně aplikace v klastru. \cite{poulton_2022_the}
@@ -299,14 +299,12 @@ První výhodou je, že Ingress má přístup k datům. Jelikož komunikaci sám
 
 Ingress poskytuje jedno jednoduché řešení pro zabezpečení veškeré komunikace, která je vedena přes objekt Ingress. Toto je druhá výhoda tohoto řešení. Díky tomuto není zodpovědnost zabezpečení na vývojářích aplikace, ale na administrátorech daného klastru. Zároveň je logika šifrování implementované v Ingress kontroleru, což je preferovanější, než aby se o bezpečnost starali vývojáři klaudových aplikací. \cite{koke_2023_bezpen}
 
-\subsection{Engress}
-Výše popsaný objekt Ingress je určen pouze pro jednosměrnou komunikaci směrem do klastru. Při komunikaci směrem z klastru ven se často hovoří o takzvané engress funkcionalitě. Jak již název napovídá, engress označuje opačnou funkcionalitu a myšlenku oproti zmíněnému ingerss. I přesto, že textitín engress je zmíněný v oficiální dokumentaci Kubernetes, tak samotný Kubernets tuto funkcionalitu neimplementije ani nedefinuje. Komunikace z klastru ven proto není nijak zdokumentovaná v Kubernetes.
+\subsection{Egress}
+Výše popsaný objekt Ingress je určen pouze pro jednosměrnou komunikaci směrem do klastru. Při komunikaci směrem z klastru ven se často hovoří o takzvané egress funkcionalitě. Jak již název napovídá, egress označuje opačnou funkcionalitu a myšlenku oproti zmíněnému ingerss. I přesto, že textitín egress je zmíněný v oficiální dokumentaci Kubernetes, tak samotný Kubernets tuto funkcionalitu neimplementije ani nedefinuje. Komunikace z klastru ven proto není nijak zdokumentovaná v Kubernetes.
 
 O komunikaci z Podů klastru do veřejného internetu se primárně starají CNI pluginy. Defaultní nastavení většiny známých CNI pluginů, je provádět překlad adres přímo na uzlu klastru, kde daný běží Pod, který se chce spojit s veřejnou sítí. Tento způsob dává dobrý smysl, jelikož nevyžaduje žádnou konfiguraci ani složiitou implementaci. Zároveň, díky plánování Podu, nezatěžuje jednu část sítě, ale určitým způsobem balancuje síťovou zátěž mezi jednotlivé Pody. Samozřejmě může nastat chvíle, kdy je potřeba vést komunikaci určitým směrem, například přes jeden z dostupných uzlů klastru. Pro tyto účely je možné použít pokročilé CNI plugins, které tuto funkcionalitu nabízejí (například coil) \cite{yamamoto_2020_introducing}. Dalším možným řešením je použití nástroje třetích stran pro správu Service, jako je například consul. Je možné, že v budoucnu bude tento problém řešen standardně pomocí kubenretes, ale momentálně dokumentace uvádí, že to možné není. \cite{thekubernetesauthors_2022_network}
 
 %Ingres je navržen tak, aby sloužil jako obecný HTTP loadbalancer, který přeposílá požadavky jednotlivým apliakcím běžícím v klastru. Lze si ho představit jako vstupní bránu celého klastru, která umožujě dostupnost některých aplikací v klasru okolnímu světu. Objekt ingress je pouze definicí, nikoliv   
-
-
 
 %Prvním problémem je objekt do  a slouží k řešení dvou hlavních problémů, které dosavadní řešení pomocí služeb (services) neřeší
 

@@ -1,10 +1,10 @@
 \begin{lstfloat}
 \begin{lstlisting}[
 style=mybashstyle,
-caption={Ukázka konfigurace Network Attachment Definition},
-label={sample:nad}
+caption={Definice connection - device01-01},
+label={sample:device}
 ]
----
+[_]$ cat > device.yaml <<EOF
 apiVersion: k8s.cni.cncf.io/v1
 kind: NetworkAttachmentDefinition
 metadata:
@@ -20,10 +20,14 @@ spec:
       "ipMasq": true,
       "ipam": {
         "type": "host-local",
-        "ranges": [[{ "subnet": "10.10.0.0/24"}]],
-        "routes": [{"dst": "0.0.0.0/0"}],
-        "dataDir": "/run/kube-edge/ipam-state"
-      }
+        "ranges": [[{
+            "subnet": "10.10.0.0/24",
+            "rangeStart": "10.10.0.20",
+            "rangeEnd": "10.10.0.50" }]],
+          "routes": [{"dst": "0.0.0.0/0"}],
+          "dataDir": "/run/kube-edge/ipam-state"
+        }
     }
+EOF
 \end{lstlisting}
 \end{lstfloat}

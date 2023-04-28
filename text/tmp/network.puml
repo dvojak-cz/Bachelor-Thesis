@@ -4,14 +4,21 @@ nwdiag {
       address = "10.244.x.x/16"
 
       group internal {
-          kmaster [address = "10.244.0.x/24"];
-          kworker [address = "10.244.1.x/24"];
-          kedge   [address = "10.244.2.x/24"]
+          description="cloud"
+          kmaster [address = "10.244.0.1/16"];
+          kworker [address = "10.244.1.1/16"];
+          kedge01   [address = "10.244.2.1/16"];
+          kedge02   [address = "10.244.2.2/16"];
       }
   }
-  network private_network {
+    network private_network02 {
+      address = "192.168.0.x/24";
+      kedge02       [address = "192.168.0.1/24"]
+      device02-01 [address = "192.168.0.100/24"];
+  }  
+  network private_network01 {
       address = "172.17.16.x/24";
-      kedge       [address = "172.17.16.111/24"]
+      kedge01       [address = "172.17.16.111/24"]
       device01-01 [address = "172.17.16.120/24"];
       device01-02 [address = "172.17.16.121/24"];
   }

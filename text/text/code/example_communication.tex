@@ -1,0 +1,14 @@
+\begin{lstfloat}
+\begin{lstlisting}[
+style=mybashstyle,
+caption={Komunikace s zařízením privátíní sítě pomocí edge-operator},
+label={sample:communication}
+]
+kubectl apply -f doc/sample/dbg.yaml
+kubectl exec -it debug -- bash
+nc dop-sample-connection 8080
+nc -u dop-sample-connection 9090
+curl dop-sample-connection:8000
+\end{lstlisting}
+\end{lstfloat}
+
