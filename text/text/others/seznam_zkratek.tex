@@ -1,0 +1,41 @@
+%grep -rEoe '[A-Z]{2,}' --include '*.tex' | cut -d ':' -f2 | sort -u | grep -vE "$(cat text/others/seznam_zkratek.tex | grep '^[A-Z]' | cut -d' ' -f1 | tr '\n' '|')$(cat text/others/ignore.zk.txt | tr '\n' '|' )a" -
+
+%grep -rEoe '[A-Z]{2,}' --include '*.tex' | cut -d ':' -f2 | sort -u | SZ=text/others/seznam_zkratek.tex grep -vE "$(cat "${SZ}" | grep '^[A-Z]' | cut -d' ' -f1 | tr '\n' '|')$(cat text/others/ignore.zk.txt | tr '\n' '|' )a" -
+%export SZ=text/others/seznam_zkratek.tex
+%export IZ=text/others/ignore.zk.txt
+%grep -rEoe '[A-Z]{2,}' --include '*.tex' | cut -d ':' -f2 | sort -u | grep -vE "$(cat "${SZ}" | grep '^[A-Z]' | cut -d' ' -f1 | tr '\n' '|')$(cat "${IZ}" | tr '\n' '|' )a" -
+
+
+\begin{tabular}{rl}
+API & Application Programming Interface\\
+ARP & Address Resolution Protocol\\
+BGP & Border Gateway Protocol\\
+CNI & Container Network Interface\\
+CRD & Custom Resources Definition\\
+CRI & Container Runtime Interface\\
+DNS & Domain Name Server\\
+FIT & Fakulta informačních technologií ČVUT - Praha\\
+GRASP & General Responsibility Assignment Software Patterns\\
+HIL & Hardware In Loop\\
+HTTP & Hypertext Transfer Protocol\\
+HW & Hardware\\
+IP & Internet protocol\\
+ISO/OSI & Referenční model ISO/OSI\\
+JSON & JavaScript Object Notation \\
+MQTT & Message Queue Telemetry Transport\\
+NAT & Network address translation\\
+OCI & Open Container Initiative\\
+OS & Operační systém\\
+QUIC & Quick UDP Internet Connection\\
+REST & Representational State Transfer\\
+SIL & Software In Loop\\
+SQL & Structured query language\\
+SSL & Secure Sockets Layer\\
+TCP & Transmission Control Protocol\\
+TLS & Transport Layer Security\\
+UDP & User Datagram Protocol\\
+URI & Uniform Resource Identifier\\
+UTS & UNIX Time-Sharing\\
+VXLAN & Virtual Extensible Local Area Network\\
+YAML & YAML Ain't Markup Language\\
+\end{tabular}

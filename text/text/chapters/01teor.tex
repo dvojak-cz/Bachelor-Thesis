@@ -1,0 +1,313 @@
+\chapter{Teoretická část}
+\begin{chapterabstract}
+V této kapitole jsou vysvětleny a popsány základní stavební bloky kontejnerizace a orchestrátoru Kubernetes. Se znalostí těchto konceptů je následně vysvětlena problematika síťování kontejnerů a síťování v Kubernetes.  
+
+Porozumění této kapitoly je kritické pro porozumění navazujících kapitol.
+\end{chapterabstract}
+
+%================================================================================================
+\section{Kontejnery}
+Kontejnerizace je způsob virtualizace a izolace prostředí na úrovni operačního systému. V této práci se budeme bavit převážně o aplikačních kontejnerech, proto kdykoliv v textu je uveden výraz kontejner, řeč je právě o kontejneru aplikačním. Výraz kontejner reprezentuje běžící instanci kontejnerového obrazu (container image). Dále se zaměříme pouze na linuxové kontejnery splňující Open~Container~Initiative specifikaci.
+
+Pro lepši přiblíženi kontejnerů a kontejnerizace obecně, doporučuji článek \href{https://iximiuz.com/en/posts/container-learning-path/}{\textit{Learning Containers From The Bottom Up}} od \textit{Ivan~Velichko} a přednášku \textit{Kontejnery -- principy a Docker} od \textit{Ing.~Tomáše~Vondry,~Ph.D.}
+\subsection{Open~Container~Initiative}
+Za velký pokrok v oblasti kontejnerizace z velké části může společnost Docker,~Inc, která je autorem stejnojmenné technologie Docker. Docker vznikl jako interní nástroj pro poskytování služeb ve společnosti dotCloud. V roce 2013 se společnost dotCloud přetransformovala do společnosti Docker,~Inc. \cite{poulton_2020_docker}
+
+Technologie Docker zažila masivní úspěch. Právě kvůli vzrůstající popularitě kontejnerizace vznikl projekt názvem Open~Container~Initiative (zkráceně OCI).
+
+Dle oficiálních stránek, OCI je projekt, který vznikl za účelem vytvoření a udržovaní otevřených standardů pro formát kontejnerů a běhových prostředí kontejnerů (container runtime). Na projektu OCI se podílí jak nadšeni jednotlivci, tak i velké společnosti jako je například RedHat, IBM, Docker a další. OCI poskytuje sadu standardů pro kontejnerové technologie. Díky těmto standardům jsou dnes jasně definovaná rozhraní, na které se mohou spoléhat jiné technologie pracující právě s kontejnery. \cite{thelinuxfoundation_about}
+
+Open~Container~Initiative momentálně spravuje tři standardy. Konkrétně se jedná o \textit{Runtime~Specification}, \textit{Image~Specification} a \textit{Distribution~Specification}. \cite{thelinuxfoundation_about}
+
+\textit{Image~Specification}(česky specifikace obrazu kontejneru) definuje převážně podobu manifestů pro kontejnery a rejstříky kontejnerů.
+První část specifikace definuje formát manifestu pro obraz kontejneru. Cílem je zajistit, adresovatelnost jednotlivých konfigurací obrazů kontejneru. Toho je docíleno pomocí hašovaní a generování unikátních identifikátorů. Další část specifikace popisuje rejstřík, pro uchovávání jednotlivých manifestů kontejnerů. Třetí část specifikace popisuje způsob, jakým sterilizovat filesystém kontejneru a změny tohoto filesystému. Poslední část specifikace definuje formát pro popis obrazu kontejneru. Tento formát obsahuje potřebné informace pro běhové prostředí kontejnerů. Jedná se převážně o metadata obrazu kontejneru a popis filesystému kontejneru. \cite{opencontainerinitiative_2022_image}
+
+\textit{Runtime~Specification}(česky specifikace běhového prostředí) specifikuje konfiguraci, běhové prostředí a životní cyklus kontejneru. V prví části jsou vydefinovány možné stavy kontejnerů a jejich význam, podporované operace s kontejnery (spuštění, pozastavení\ldots) a životní cyklus kontejneru. Druhá část specifikace popisuje konfigurační soubor, který je použit při práci s kontejnery. Zbylá části obsahují různá rozšíření a popis běhového prostředí již pro konkrétní platformy. Popisovanými a proto i podporovanými platformami jsou \textit{Linux}, \textit{Solaris}, \textit{Windows}, \textit{virtuální stroje} a \textit{z/OS}\footnote{z/OS je operační systém vyvíjeny spojeností IBM}. Nejdůležitější platformou pro účely této práce je Linux. V runtime specifikaci pro Linux je určeno, jaké prostředky mají být použity pro korektní běh kontejnerů. Jedná se o \textit{namespaces}, \textit{cgroups}, \textit{capabilities}, \textit{LSM} a \textit{chroot}. Díky těmto nástrojům zle dosáhnout požadované virtualizace na linuxových systémech. \cite{opencontainerinitiative_2022_open}
+
+Poslední specifikací OCI je \textit{Distribution~Specification}. Jedná se o nejnovější specifikaci v rámci Open~Container~Initiative. Tato specifikace popisuje API protokol, který slouží pro komunikaci mezi image container registry.\footnote{Container registry označuje službu která, implementuje API dle zmíněné specifikace. Container registry poskytuje vzdálené úložiště pro obrazy kontejnerů. Příkladem takové služby je DockerHub.} \cite{opencontainerinitiative_2022_distribution}
+
+\subsection{Síťování kontejnerů}\label{sitovaniKon}
+Linuxové kontejnery dle standardu OCI pro izolaci síťování používají síťové jmenné prostory (network namespaces).
+Síťový jmenný prostor je jeden z osmy jemných prostorů jádra linuxových operačních systémů. Prostor které slouží k izolaci globálních prostředků jádra. Díky této izolaci lze procesy oddělit od nepotřebných systémových zdrojů. Síťový jmenný prostor abstrahuje veškeré prostředky spojené se síťováním. Mezi abstrahované prostředky patří například zařízení pro síťová zařízení, IP adresy, IP tables a další. \cite{thelinuxmanpagesproject_2022_namespaces7}, \cite{thelinuxmanpagesproject_2022_network_namespaces7}
+
+V manuálových stránkách o síťovém jmenném prostoru jsou zmíněné následující informace. \uv{Síťové zařízení může být součástí právě jednoho síťového jmenného prostoru.} \uv{Pár dvou virtuální síťové rozhraní (veth) může sloužit pro propojení dvou sítových zařízení v dvou jiných jmenných prostorech}. \cite{thelinuxmanpagesproject_2022_network_namespaces7} Tyto informace popisují, jak je možné propojit kontejnery s okolním světem. Právě virtuálních síťových rozhraní využívají i implementace kontejnerů.    
+
+Způsobů jak kontejnery propojit s okolí sítí pomocí veth je mnoho. Níže bude popsán jeden z nejčastěji používaných způsobů\footnote{Ukázka různých implementací pro běhové prostředí docker je uvedena na \href{https://docs.docker.com/network/}{stránkách společnosti Docker}}.
+
+Předpokládejme, již běžící docker container bez nastaveného síťování. Tohoto lze dosáhnout pomocí následujícího příkazu \ref{cmd:dockerNetNone}.
+\input{text/code/cmd_dockerNetNone}
+
+Zmíněným příkazem získáme běžící proces \verb|/bin/sh|, který bude oddělený od hostujícího sytému pomocí prostředků jádra linuxového operačního systému. V tuto chvíli máme funkční linuxový kontejner, který ale není nijak připojen s okolní sítí. Aktuálně se proces bude nacházet v novém síťovém prostoru, který nám byl dockerem vytvořen. Tento prostor bude obsahovat pouze síťové rozhraní typu loopback, jak je vidět v ukázce \ref{cmd:podNoneSample}. 
+
+\input{text/code/cmd_podNoneSample}
+
+Proto aby bylo možné se z kontejneru připojit do okolní sítě, případně se ze sítě připojit do kontejneru, je potřeba toto spojení vytvořit. Připojení pomocí síťového ovladače (driveru) \textit{bridge} se skládá z následujících kroků. Pořadí kroků odpovídá pořadí provádění v samotné implementaci.
+\begin{enumerate}
+\item Vytvoření síťového jmenného prostoru\\
+Jako první se vytvoří jmenný prostor pro kontejner. Všechny procesy, které běží uvnitř kontejneru budou součástí tohoto prostoru.%\footnote{Pozor Docker nevytváří soubor v \verb-/var/run/net- proto není jmenný prostor vidět pomocí \verb-ip~netns~list-.}
+\item Vytvoření rozhraní typu bridge\\
+Dalším krokem je vytvoření rozhraní typy bridge. Linuxový bridge je virtuální rozhraní, které slouží primárně k propojení více síťových segmentů. Propojení probíhá na druhé respektive třetí (záleží na použití) vrstvě modelu ISO/OSI. Toto rozhraní je vytvořeno v kořenovém prostoru hostujícího zařízení. V implementaci Dockeru se toto rozhraní nazývá \verb|docker0|
+\item Vytvoření páru rozhraní typu \verb|veth peer|\\
+Pro komunikaci mezi jmennými prostory je vytvořen pár virtuálních rozhraní. Tato rozhraní si navzájem přeposílají veškerou komunikaci. Tento pár slouží, jako prostředek komunikace mezi síťovým prostorem kontejneru a kořenovým jmenným prostorem.
+\item Vložení jednoho rozhraní \verb|veth| do síťového jmenného prostoru\\
+V tomto kroku se vloží jeden z páru rozhraní do vytvořeného jmenného prostoru. 
+\item Připojení druhého konce \verb|veth| páru do vytvořeného bridge rozhraní\\
+Nyní se jeden z virtuálních páru připojí do rozhraní bridge. V tuto chvíli je vytvořeno spojení mezi rozhraní uvnitř kontejneru a vytvořeným bridgem. Pokud by se v systému nacházely další kontejnery, které mají síťování nastavené stejným způsobem, pak by byly tyto kontejnery propojeny mezi sebou právě pomocí bridge rozhraní.
+\item Přidělení IP adres pro bridge a \verb|veth| uvnitř jmenného prostoru\\
+Nyní se v kontejneru nakonfiguruje rozhraní. Součástí konfigurace je přidělení IP adresy, masky podsítě\ldots  
+\item Zapnutí potřebných rozhraní
+\item Nastavit NAT a IP Masquerade v hostujícím jmenného prostoru\\
+Proto aby bylo možné se z rozhraní bridge propojit na okolní síť, je na hostujícím systému nastavena NAT a IP Masquerade. Toto je prováděno pomocí prostředků kernelu. Konfigurace je prováděna pomocí netfilter respektive iptables.
+\end{enumerate}
+
+Zmíněné kroky lze provést následujícími příkazy.
+
+\input{text/code/cmd_bridge}
+
+Výše popsaný postupu odpovídá implementace pro docker pomocí sítového ovladače bridge. Pro lepší pochopení výsledného stavu je k dispozici schéma \ref{img:ContainerNetworking} ilustrující konfiguraci.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.98\textwidth]{images/router.png}
+\caption[Schéma síťování pro ovladač bridge v docker]{Schéma síťování pro ovladač bridge v docker \cite{velichko_2020_connecting}}\label{img:ContainerNetworking}
+\end{figure}
+
+\subsection{Container~Network~Interface}\label{cni}
+Kontejner má díky OCI jasně definované jakým způsobem izolovat síťový provoz v kontejneru. Žádná z OCI specifikací nedefinuje jakým způsobem umožnit kontejnerům komunikaci i mimo jeho jmenný síťový prostor (výše popsaný způsob je jen jeden z mnoha způsobů a implementací). Právě protože komunikace mimo kontejner není součástí specifikace OCI, různé implementace kontejnerových řešení řeší problematiku různými způsoby. Jednou z těchto implementací je právě již zmíněný ovladač bridge implementovaný společností dockeru. Proto aby jednotlivé implementace měly jednotné rozhraní, byl vytvořen standard Container~Network~Interface (CNI).
+
+Díky tomuto je možné oddělit implementaci běhového prostředí kontejnerů a implementaci síťování. CNI určuje, že realizace CNI standardu mají být implementovány formou binární spustitelných souborů. Tyto spustitelné soubory se označují jako moduly, případně CNI ovladače.
+
+Ve standardu je CNI označován jako \uv{množina standardu, definující rozhraní pro síťování kontejneru} \cite{thekubernetesauthors_2023_container}. Specifikace definuje následující:
+\begin{enumerate}
+    \item Formát souboru pro definici síťové konfigurace\\
+    CNI definuje formát souboru pro konfiguraci dostupných CNI modulů implementující standard. Tento soubor slouží administrátorům pro nastavení a definování podporovaných modulů. Tento soubor je následně používán aplikacemi spravující kontejnery (runtimes). Dle dodané konfigurace runtimes pracují s jednotlivými CNI moduly.\\
+    Konfigurace se skládá z JSON objektu, který obsahuje aktuální verzi CNI standardu, název a seznam podporovaných modulů. Seznam objektů pak obsahuje referenci na daný modul, standardem definované parametry a parametry specifické pro modul.
+    \item Protokol pro komunikaci mezi runtime aplikací a CNI modulem\\
+    Implementace CNI specifikace přijímají parametry formou globálních proměnných a standartního vstupu. Každý CNI modul musí podporovat čtyři základní operace (\textit{ADD}, \textit{DEL}, \textit{CHECK}, \textit{VERSION}), které jsou ve standardu specifikovány.
+    \item Postup pro spouštění modulů\\
+    Pomocí zmíněného způsobu je možné, aby runtimes využívaly služeb CNI modulů a tím mohly spravovat síťování uvnitř kontejnerů. Proto, aby komunikace fungovala definuje CNI řadu pravidel pro CNI moduly a runtimes, které tyto moduly spouští.\\
+    Runtime je zodpovědný za vytváření nových síťových prostorů a korektní volání operací modulů. Runtime nesmí vola více paralelních operacecí nad jedním kontejnerem. Runtime musí volat CNI v případě mazání kontejneru, na kterém byl CNI použit.
+    CNI modules musí správně pracovat s více kontejnery, v případě potřeby je zodpovědný za správné zacházení se sdílenými prostředky. 
+    \item Postup delegování práce modulů na jiné moduly\label{enumerate:cni}\\
+    Pro určité potřeby dává smysl umožnit CNI modulům volat jiné moduly. Pro tyto případy je ve specifikaci popsán způsob, který unožuje CNI modulům delegovat práci i na jiné implementace modulů. Tato funkcionalita umožňuje velikou flexibilitu při vykonávání operací. Příkladem využití je modul multus, který umožňuje volat více CNI pluginů, bez nutnosti přizpůsobovat runtimes.\\
+    Tato část specifikace bude důležitá v následujících kapitolách. Konkrétně v sekci \ref{sec:kncrdds} a sekci \label{sub:multus}.
+    \item Návratové hodnoty CNI operací\\
+    Poslední část specifikace definuje datové typy, které se souží jako návratové hodnoty při volání CNI modulů. Volané moduly mohou vracet jeden ze tří typů návratových dat (\textit{Success}, \textit{Error}, \textit{\_Version}). Tyto data obsahují bližší informace o výsledku volání.  
+\end{enumerate}
+
+Díky tomuto standardu se problematika síťování kontejnerů abstrahovala a přesunula zodpovědnost konfigurace síťování z běhových prostředí kontejnerů na jednoduché modulární programy. Při využití CNI již běhové prostředí nemusí implementovat logiku konfigurace a mohou se spolehnout na již vytvořené obecné CNI moduly. \cite{thekubernetesauthors_2023_container}
+%================================================================================================
+\section{Kubernetes}
+\textbf{??Více vysvětlit k8s a vstah s OCI???}\\
+Kontejnerizace velmi ovlivnila způsob doručování a nasazování aplikací. Myšlenka kontejnerů a OCI vytvořili jednoduchý prostředek komunikace mezi vývojáři aplikací a administrátory. Kontejnery velmi standardizovalo správu a nasazování aplikací na servery. Pro ulehčení s kontejnery dává smysl zajímat se o orchestarci těchto kontejnerů.
+
+%\subsubsection*{Orchestrace --- Mam popisovat orchestraci?}
+%Orchestrace je proces, který zahrnuje automatickou konfiguraci, správu a koordinaci počítačových systémů. Cílem orchestrace je zjednodušit správu a práci s komplexními informačními systémy, které se typicky skládají z více komponent (částí). \cite{redhat_2019_what} Orchestrace často využívá automatizace k dosažení zjednodušení.
+
+%Automatizace má za cíl eliminovat lidskou práci spjatou s provedením úkonu. Jedná se o nastavení daného úkolu tak, aby se prováděl automaticky, bez nutnosti lidského zásahu. Příkladem automatizace je automatické odesílání reklamních emailů, proces obnovení zapomenutého hesla bez zásahu administrátora, a mnoho dalších. \cite{watts_2020_it}, \cite{redhat_2019_what}. Automatizace a Orchestrace není to samé a proto je důležité tyto dva pojmi rozdělovat. 
+
+%Orchestrace se využívá v mnoha oblastech informatiky. Mezi nejčastější oblasti, kde se orchestrace využívá patří správa cloudu a infrastruktury, správa služeb a průběhu jejich nasazování, administrace serverů a jiných zařízení. K orchestraci se využívají takzvané orchestrální nástroje. Orchestrační nástroj (zkráceně orchestrátor) je nástroj, který obsahuje prostředky pro ulehčení práce s systémy. Často se jedná o technologie složené z malých programů a modulů, které automatizují určité kroky. Ochestrátorů je velká řada. Mezi nejznámější z nich patří Kubernetes. \cite{goldberg_2019_workflow}
+\bigskip\medskip
+Kubernetes je orchestrační nástroj, který umožňuje snadnější práci a administraci s kontejnery. Kubernetes vznikl jako nástroj pro správu aplikací ve společnosti google. Z počátku byl vyvíjen jako interní nástroj pro googlu. V roce 2014 googl daroval tento systém nadaci \textit{Cloud Native Conputing Foundation}. \cite{poulton_2022_the}. Následně se Kubernetes stal velmi populární open-source technologií. Dnes je nadšenci poznačován i za operační systém cloudu. \cite{poulton_2022_the}%\footnote{Takto ho označil ve své knize Nigel Poulton \cite{poulton_2022_the}}.
+
+%Technologie Kubernetes poskytuje vrstvu abstrakce nad cloudem. Díky této vrstvě lze jednoduše abstrahovat privátní i hostované cloudové služby. Díky této abstrakci je dobře odděleno prostředí pro nasazovaní a správu aplikací od samotných serverů, na kterých Kubernetes operuje. Kubernetes pak poskytuje jednotné rozhraní, jak deklarativním způsobem spravovat aplikace. Právě toto jednotné rozhraní je považováno za velký důvod, proč se stala tato technologie populární. \cite{darinpope_2019_devops}
+
+\subsection{Základy systému Kubernetes}
+
+Kubernetes je orchestrační nástroj pro správu a nasazování aplikací v prostředí cloudu. Pro základní pochopení orchestrátorů je dobré vědět, jakým způsobem orchestrátor pracuje. Díky tomu je možné pochopit možnosti a limity této technologie.
+
+Kubernetes typicky operuje na více serverech, ze kterých tvoří takzvaný klastr. Klastr nejčastěji označuje množinu počítačů, které spolu spolupracují. Pro účely této práce budeme klastr chápat jako množinu serverů, které jsou součástí Kubernetes.
+
+Kubernetes se skládá z více mikroservisních modulů, které společně tvoří samotnou technologii. Tyto moduly je možné rozdělit do tří základních kategorií. První kategorií jsou moduly tvořící takzvaný \textit{control plane} (dříve také označovaný jako master node). Druhou kategorií jsou moduly, které tvoří \textit{worker node} (česky pracovní uzel).
+
+Množina modulů control plane je jádrem Kubernetes klastru. Základním úkolem této množiny je správa pracovních uzlů a Podů (pojem Pod bude vysvětlen později) v klastru. \cite{thekubernetesauthors_2022_kubernetes} Tato množina obsahuje pět základních prvků.
+\begin{itemize}
+    \item etcd\\
+    Etcd je distribuovaná NoSQL databáze, která uchovává data  ve formě klíč-hodnota. Tato databáze je jediným prvkem Kubernetes, který uchovává perzistentní data o stavu klastru. Případná ztráta dat v této databázi vede k nefunkčnosti celého systému.
+    \item API Server\\
+    API server je komponenta, která vystavuje rozhraní pro komunikaci s kastrem. API Server je označován jako front-end celého systému Kubernetes. Komunikace s vystavovaným API probíhá za pomocí protokolu HTTP a REST architektury. 
+    \item Plánovač\\
+    Plánovač, jak už název napovídá, slouží k plánovaní úloh v klastru. Jeho úkolem je pozorovat etcd databázi a reagovat na případné změny. V případě potřeby má za úkol vyřešit požadavek tak, že naplánuje jeho provedení a deleguje naplánovanou práci na jinou komponentu Kubernetes.  
+    \item Správce kontrolerů\\
+    Správce kontroleru spravuje programy, které se označují jako kontrolery. Tyto programy jsou zodpovědné za většinu práce v klastru. Příkladem zodpovědnosti kontroleru může být kontrola stavu serverů (v případě node controler), nebo správa jednotlivých objektů Kubernetes.\\
+    Více detalněji jsou kontrolery a objekty kubernetes popsány v kapitole \ref{sec:extend}, která se zabývá rozšiřováním funkcí kubernetes. 
+    \item Správce cludu\\
+    Poslední komponentou je správce cloudu. Jedná se o komponentu, která provádí komunikaci s API poskytovatelů veřejných cloudu, jako jsou například AWS a Azure. 
+\end{itemize}
+Zmíněné moduly tvoří jádro systému Kubernetes. Tyto moduly mohou běžet na jednom, nebo více serverech, které Kubernetes spravuje.
+
+Druhá kategorie, modulů pracuje přímo s Pody (objekty abstrahující kontejnery). Kontejnery spravované těmito moduly představují samostatné aplikace, které uvnitř Kubernetesu běží. Dá se říct, že tvoří pracovní sílu klastru -- z tohoto plyne název pracovních uzly.
+
+Tato skupina se skládá z následujících modulů:
+\begin{itemize}
+    \item kubelet\\
+    Kubelet je deamon, který běží na každém serveru v klastru. Úkolem tohoto démona je komunikovat s kube-api serverem, zároveň spravovat kontejnery a Pody, které běží přímo na daném serveru. 
+    \item kube-proxy\\
+    Kube-proxy je modul, který běží na každém uzlu klastru a nastavuje síťování pro daný uzel. Kubernetes dodává výchozí implementaci tohoto modulu, zároveň ale umožňuje delegovat práci na program jinou implementaci, kterou administrátor zvolí. 
+    \item container runtime\\
+    Poslední komponentou, která je přítomná na každém stroji je container runtime. Container runtime musí být nainstalovaný na každém a splňovat runtime specifikaci OCI. V současné době Kubernetes doporučuje jeden z následujících runtimes: \textit{containerd}, \textit{CRI-O}, \textit{Docker Engine}, \textit{Mirantis Container Runtime} \cite{thekubernetesauthors_2023_container} 
+\end{itemize}
+
+Díky výše popsaným komponentám lze dobře pochopit fungování Kubernetes. Z předchozích kapitol je zřejmé, že Kubernetes slouží pro orchestraci kontejnerů na více počítačích. Následující odstavec popíše, jakým způsobem jsou tyto kontejnery nasazovány.
+
+\textbf{||KOREKTURU||}\\
+Nasazení Podu (pro tento účel Pod chápat jako kontejner) zažíná tím, že \textit{kube-api} dostane požadavek na jeho vytvoření. V tuto chvíli \textit{kube-api} zaznamená požadavek do \textit{etcd} databáze. V databázi se momentálně nachází informace o Podu, tato informace je chápána jako očekávaný stav klastru. Nyní přichází na řadu jeden z kontrolerů, konrétně \textit{pod-controller}. Tento kontroller má za úkol pozorovat změny databázi a aktuální stav klastru. Jeho úkolem je porovnávat požadovaný stav Podů, který je uložen v databázi, a stav klastru. V případě, že očekávaný stav klastru se neshoduje s reálným stavem klastru, jeho úkol je pokusit se stav klastru napravit. V našem případě se jedná o vytvoření nového Podu. V tuto chvíli požádá \textit{pod-controller} modul \textit{pod-scheduler}, aby vybrala nejhodnějšího kandidáta (z množiny serverů klastru) pro nasazení daného Podu. Jakmile je kandidát vybrán, dostane se informace o vytvoření Podu do příslušného \textit{kubelet} démona, který Pod vytvoří. Všechny změny a akce jsou v průběhu zapsány do \textit{etcd} databáze.  
+
+Díky výše popsáným mechanizmům a modulům Kubernetes, tvoří Kubernetes opravdu mocný orchestrátor aplikaci. Mezi hlavní služby, které Kubernetes nabízí patří například: Nasazování aplikací, Škálování aplikací do šířky, Automatické opravování nasazených aplikací, Bez výpadková aktualizace aplikací bežících v Kubernetes, Vysoká automatizace procesů pro administraci aplikací a mnoho dalších. \cite{poulton_2022_the}\\
+\textbf{||KOREKTURU||}
+\subsection{Pod}
+Pod je základním objektem Kubernetes. Jedná se o určitou abstrakci kontejneru, se kterou Kubernetes pracuje. Pod je často chápán, jako kontejner, který obsahuje další kontejnery. Pro jednoduché porozumění problematiky je toto vysvětlení dostačující, i přesto, že není sto procentně pravdivé.
+
+Stejně jako kontejnery jsou i Pody implementovány pomocí jmenných prostorů procesu. Pod je prostředí formované jemnými prostory, ve kterém je možné spouštět potřené kontejnery. Tímto kubernetes zaobaluje kontejnery. Pod je atomický objekt, který lze v Kubernetes plánovat.
+
+Při vzniku Podu se vytváří tři jmenné prostory procesů, které jsou sdílené se všemi kontejnery v Podu. Konkrétně se jedná o jmenný prostor mezi-procesové komunikace (IPC namespace), jmenný prostor názvu a domény systému (UTS namespace) a síťový jmenný prostor (net namespace). Všechny zmíněné prostory jsou sdílené napříč kontejnery v Podu. Jednotlivé kontejnery jsou izolovaný pouze pomocí jmenného prostoru proces ID (pid namespace)
+a jmenného prostoru přístupových bodů (mnt namespace). Problematika je výborně ilustrována na schématu \ref{img:podSchema} od Ivan Velichko.
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.9\textwidth]{images/pod.png}
+\caption[Schéma jmenných prostorů v Podu]{Schéma jmenných prostorů v Podu \cite{velichko_2021_kubernetes}}\label{img:podSchema}
+\end{figure}
+
+Mezi hlavní vlastnosti Podu patří nestálost (často popisováno anglickým slovem emhemeral) a neměnnost (anglicky immutability). Nestálost v kontextu Podu značí nestálost v případě zániku Podu (v anglické literatuře se Pod občas označuje za smrtelný -- mortable). V případě zániku Podu se veškeré informace a data spjatá s daným Podem ztratí. Proto není dobré se jakýmkoliv způsobem spoléhat na data uvnitr Podu. Druhou klíčovou vlastností je zmíněn neměnnost. Tato vlastnost znamená, že již běžící objekt Pod nelze jakýmkoliv způsobem měnit. V případě potřeby změny je nutné vytvořen Pod nový a starý smazán. \cite{poulton_2022_the}
+
+Z výše popsaných vlastností lze odvodit i vlastnosti další. Zde jsou příklady těch, které jsou důležité pro účely práce: Každý Pod má vlastní nepředvídatelnou IP adresu, pokud Pod zemře a na-místo něj vznikne nový, nelze nová IP adresa předvídat. V případě zániku Podu se ztrácí veškerá data v něm uložená. Při vzniku Podu nelze předpovědět na jaký server bude Pod naplánován (pokud není explicitně uvedeno). 
+
+\subsection{Deployment}
+Deployment je další objekt Kubernetes, který slouží převážně pro nasazování takzvaných bezstavových aplikací, které následně běží v Podech. Bezstavové aplikace jsou aplikace, které nemají žádný vnitřní stav a neukládají žádná perzistentní data. Často se jedná o různé jednoduché webové API, webové front-endy a podobně. Typické pro tyto aplikace je, že jsou nezávisle na předchozích a budoucích požadavcích. Právě pro potřeby provozování těchto aplikací je určený objekt Deployment.
+
+Deployment je objekt, který zaobaluje již popsaný objekt Pod. Tento objekt se skládá ze dnou částí. První je specifikace šablony pro Pod. Tato šablona slouží pro popis Podu, který náleží danému Deploymentu. Druhá část Deplymentu specifikuje jakým způsobem se má s Pody zacházet. Tento popis obsahuje informaci o počtu Podů, které mají v jedem okamžik běžet, jakým způsobem provádět aktualizace Podů\ldots
+
+Pro tento objekt zároveň existuje vlastní kontroler, který se stará o veškeré Deployment v klastru. Kontroluje, zda vše běží tak jak má a zda jsou dodržena veškerá pravidla nastavená daným Deploymentme. V případě potřeby (například vytvoření nového Podu) se pokusí o nápravu. \cite{poulton_2022_the}
+
+Deplyment umožňuje kontrolu Podů pro nestavové aplikace.
+%================================================================================================
+\section{Standartní síťování v Kubernetes}
+Síťování je velmi důležitou částí Kubernetes. Kubernetes poskytuje celkem 4 řešení pro síťování uvnitř clusteru. V následující části se zaměříme primárně na komunikaci, které probíhají na transportní vrstvě, nebo vyšší -- dle standardu ISO/OSI. Předpokládejme, že pro síťovou vrstvu používáme protokol \textit{IP} verze 4 (\textit{IPv4}).
+
+\subsection{Kontejner s kontejnerem uvnitř Podu}
+Díky tomu, že jednotlivé kontejnery z jednoho Podu sdílí stejný síťový jmenný prostor mají všechny kontejnery přístup ke stejným síťovým systémovým prostředkům. Všechny kontejnery v Podu mají sdílené síťové zařízení, stejnou IP adresu a další prostředky. Zároveň každý Pod obsahuje síťové rozhraní typu \textit{loopback}. Komunikaci mezi kontejnery je tedy prováděna pomocí \textit{loopback} rozhraní. To v praxi znamená, že kontnery v Podu mohou posílat data na rozhraní loopback a ostatní kontejnry mohou na loopback adrese naslouchat.%\footnote{V případě potřeby mohou kontejnery komunikovat pomocí System V IPC objektů}
+
+\subsection{Komunikace Pod s Podem}
+Při komunikaci Podu s Podem nastává problém, jelikož si nevystačíme pouze s vlastnostmi OCI kontejnerů. Při komunikaci Podu s jiným Podem je často zapotřebí zprostředkovat komunikaci mezi více než jedním uzlem klastru.
+Tento typ komunikace musí vyřešit problémy jako přidělování IP adres Podum, sdílení dat mezi více uzly, kontrola kolizí portu, routování mezi uzly\ldots
+
+Řešení zmíněných problémů je netriviální a velmi těžko obecně implementovatelné tak, aby vyhovovalo každému nasazení Kubernetes. Z tohoto důvodu není řešení této komunikace součástí Kubernetes. Namísto toho se Kubernetes odvolává na zmíněný standard CNI. Proto aby Kubernetes podporoval zmíněnou komunikaci musí být po instalaci a inicializaci k8s nahrán modul (CNI plugin), který požadovanou komunikaci dokáže zprostředkovat\ldots{Tyto pluginy lze jednoduše inicializovat jako objekty Kubernetes (nejčastěji Pody, Deplooymenty a deamondsety).}.
+
+První požadavek na funkční CNI modul pro potřeby Kubernetes je zajištní nastavení síťových rozhraní v Podu. I přesto, že CNI pracuje převážně s kontejnery, je možné CNI pro účely konfigurace Podu použít. Stačí nastavit rozhraní jednomu z kontejnerů v Podu a díky sdílení jmenného prostoru nastavení projeví v celém Podu. Tento požadavek je jednoduché splnit, za použití referenčních modulů CNI, které autoři CNI a CNI komunita vytvořila.\footnote{Tyto moduly lze nalézt na \href{https://github.com/containernetworking/plugins}{https://github.com/containernetworking/plugins}}
+
+Druhým požadavkem, který je kladen vývojáři Kubernetes na vývojáře CNI modlů je umožnit přímou komunikaci mezi Pody skrz více uzlů. Tento požadavek je netriviální problém a není nijak více specifikovaný. Absence této specifikace klade na CNI moduly vysoké nároky, jelikož by v ideálním případě měli pracovat s libvolnou infrastrukturou(prostředky OS na uzlu, infrastruktura sítě, politika sítě....). Většina řešení tohoto problému se dá rozdělit do 4 základnách skupin (full mesh of static routes, Orchestrating the underlay, Encapsulating in the overlay, Cloud API). \cite{kashin_2022_cni}, \cite{cncfcloudnativecomputingfoundation_2019_kubernetes}. V případě, že se všechny uzly nachází na stejné L2 ISO/OSI vrstvě, je možné routování dosáhnout pomocí statické konfigurace routovacích pravidel. Druhým způsobem je využití směrovacích protokolů (například BGP), případně dynamickým nastavováním routovacích pravidel. Tento způsob umožňuje práci s uzly mezi odlišnými L2. Tento způsob se nazývá Orchestrating the underlay (calico). Velmi často využívaným způsobem je využití VXLAN, díky které lze enkapsulovat network (flannel). Posledním způsobem jsou často proprietární řešení, která umí komunikovat přímo s prvky zajištující síťování. Tento způsob je typický pro cloud providers (cp-azure) Cloud API.
+
+Pro správné fungování nutné i správně přidělovat IP adresy jednotlivým Podům. Toto je také součástí implementace CNI. V drtivé většině jsou Podům přidělován adresy z rozsah, který náleží danému Podveru. Tento rozsah lze vyčíst z proměnné \textit{podCIDR}, která se nachází ve specifikaci každého uzlu klastru. Tento rozsah je odvozen z proměnné \textit{clusterCIDR}. Tato proměnná uchovává rozsah pro libovolný Pod v celém klastru. \textit{podCIDR} jsou tedy jednotlivé podsítě \textit{clusterCIDR}. Užití těchto rozsahů definovaných v proměnných je pouze doporučený postup pro implementaci CNI, nejedná se o nutné pravidlo. \cite{cncfcloudnativecomputingfoundation_2019_kubernetes}       
+
+Díky tomu, že Kubernetes deleguje tento druh síťování na CNI pluginy, které mají relativně velkou volnost implementace, je možné síťování přizpůsobit pří na míru použití clusteru Kubernetesu.
+
+Pro přiblížení zmíněných informací může posloužit ukázka nastavení klastru. Tento klastr se skládá celkem ze tří serverů, které jsou pojmenované \textit{kmaster}, \textit{kworker1} a \textit{kedge1}. \cite{thekubernetesauthors_2023_kubectl}
+
+\input{text/code/cmd_k8sNet}
+
+\cite{thekubernetesauthors_2022_cluster} 
+Doporučené CNI lze nalézt na stránce Kuberenets (\href{https://kubernetes.io/docs/concepts/cluster-administration/addons/#networking-and-network-policy}{kubernetes.io}).
+
+\subsection{Komunikace pomocí Service}
+Výše popsaná komunikace je zcela funkční, ale značně limitovaná. Přímá komunikace mezi Pody je závislá na konfiguraci jednotlivých Podů. Konkrétně na jejich IP adresách, které jsou Podům přiděleny. V případě, že jeden z Podů chce komunikovat s Podem jiným musí znát jeho IP adresu a na tu požadavky adresovat. Bohužel na stálost a neměnnost IP adress u Podů není spoleh. Z tohoto důvodu je potřeba umožnit jednotlivým aplikacím dynamicky objevovat IP adresy služeb, které chce daná aplikace adresovat. Této funkcionalitě se v anglickém jazyce říká \textit{service discovry}, do českého jazyka by se dalo přeložit jako \textit{objevování služeb}. 
+
+\textit{Service discovry} je proces dynamického, objevování IP adres, případně routovacích pravidel, v síti. Jednou z nejznámější služeb poskytující \textit{Service discovry} je \textit{DNS}. Pro dynamické objevování služeb v zásadě existují dvě řešení. Aplikace (často označované jako klientské) mohou \textit{service discovry} provozovat sami. Druhou možností je delegovat problém na jiné služby, jako právě \textit{DNS}, \textit{load balancery} \ldots Zaměřme se nyní na tyto dva způsoby v systému Kubernetes. 
+
+Zmíněné první řešení v Kubernetes by znamenalo, implementovat do jednotlivých aplikací službu, která by komunikovala přímo s \textit{kube-api}. Takto by bylo možné, aby si aplikace sami zjišťovali potřebné informace o okolních službách v klastru, které by následně mohli adresovat. Tento způsob má určité výhody, ale několik zásadních nevýhod. Mezi ty nejzásadnější nevýhody patří: související bezpečnostní problémy a s nimi spjatá správa klastru, zvýšené nároky kladené na vývojáře aplikací. Zároveň tento způsob jde proti GRASP\footnote{Grasp označuje General Responsibility Assignment Software Patterns je návrhový vzor, který prosazuje nízkou provázanost a vysokou soudržnost. \cite{mlejnek_2018_architektonick}} návrhovému vzoru. Zároveň není použitelný pro aplikace, které nejsou přímo připraveny pro běh v prostředí Kubernetes (takové aplikace se označují \textit{kube-ready}). Tento způsob řešení service-discovery není obecně preferovaný, právě z důvodů zmíněných nevýhod.
+
+Druhý způsob nabízí možnost delegace problému na jinou službu poskytující objevovaní služeb. Vzhledem k tomu, že problém \textit{Service discovry} je již dobře známí a zdokumentovaný, má již téměř standardní řešení. Většinou se pro tento problém  používá \textit{reverse proxy} respektive \textit{loadbalancing}. Zmíněné služby abstrahují přímé připojení k dostupným aplikacím. Ve většině případů se postaví mezi klientskou aplikaci a nabízenou službu. Následně samy vystavují body pro připojení a zprostředkovávají doručení komunikace koncovým službám. V praxi to znamená, že klienti, se přímo nepřipojují na danou službu, ale na reverse proxy (případně jinou službu), která požadavky přepošle na koncovou aplikaci. Proto, aby toto řešení fungovalo, musí být adresa reverse proxy známá a neměnná, reverse proxy musí být spolehlivá a dostupná v nejvyžší možné míře. Zároven musí zajistit správné přeposílání požadavků klientů na poskytované služby, což v důsledku znamená, že musí znát koncové aplikace.
+
+Variací reverse proxy ve světě Kubernetes je právě objekt \textit{Service}. Oficiální dokumentace Kubernetes uvádí, že \enquote{\textit{Service je metoda vystavování síťových aplikací, které běží v jednom, nebo více Podech.}} \cite{thekubernetesauthors_2023_service}. Toto přesně splňuje úkon, který poskytuje i výše popsaná reverse proxy. Služba Service má následující vlastnosti: je adresovatelná v celém klastru pomocí IP adresy i DNS jména, zprostředkovává komunikaci s jedním, nebo více Pody v klastru, je spolehlivá a perzistentní (její IP adresa je neměnná). Toto jsou přesně vlastnosti, které jsou potřeba pro výše popsaný problém.
+
+Pro jednoduché pochopení fungování Service je dobré se seznámit s definicí Service, které poskytuje \textit{kube-api}. Ukázku této definice lze vydět níže \ref{sample:service}.
+\input{text/code/sample_service}
+
+Prvním důležitým parametrem je název, každý objekt Service musí tento název obsahovat. Jméno následně slouží jako DNS klíč při adresování dané Service. O správný překlad adres se postará interní DNS server. Druhým velmi důležitým parametrem je \verb|selector|. Selector slouží k propojení dané Service s Pody, na které budou požadavky přeposílány. V příkladu \ref{sample:service} budou adresovaný všechny Pody, které obsahují označení \verb|app: pods-label|. Posledním důležitým parametrem je pole portů, které určují jakým způsobem má být případná komunikace na jednotlivé Pody přeposlána.
+
+Díky tomuto je možné popsat způsob, kterým lze pomocí Service komunikovat s koncovými aplikaci běží v koncových Podech. Jediné, co v definici chybí je IP adresa, dané Service. Tento parametr lze v definici vynutit pomocí \verb|clusterIP|. Pokud daná IP adresa není specifikovaná, pak Kubernetes vybere IP adresu sám. Tato IP adresa je po dobu existence Service neměnná a zaznamenaná v interním DNS serveru.  
+
+Zde je příkladem komunikace za pomocí Service. Mějme klientskou aplikace běžící v Podu \verb|C|, která by chtěla komunikovat se službou běžící v Podu \verb|A|. Zároveň v Kuberenets existuje objekt Service \verb|S|, který přeposílá požadavky na zmíněný Pod \verb|C|. Pod A chce vyslat požadavek na službu běžící, která je dostupná pomocí \verb|S|. Proto zašle požadavek přímo na \verb|C|, na daný port, který je přede dohodnutý. Toto je spolehlivé, jelikož \verb|C| má neměnnou IP adresu, jejíž hodnota je získatelná z interního DNS Kubernetesu. V tuto chvíli opouští paket Pod s cílovou adresou \verb|S|. Ještě než paket zcela opustí daný node, je díky Kubernetes pozměněna cílová adresa tak, aby směřovala přímo na daný Pod \verb|A|, kde běží potřebná služba. Při cestě paketu opačným směrem je adresa opět pozměněna, aby Pod \verb|C| nepoznal, že k nějaké změně vůbec došlo. Za povšimnutí stojí, že klientský Pod \verb|C| nemusí nic o existenci Podu \verb|A| vědět, celá komunikace je abstrahována prostřednictvím Service. Problematika Service je velmi složitá, proto zde vudedu základní otázky na odpovědi, které by člověka mohli přirozeně napadnout, pro větší pochopení Service doporučuji nastudovat oficiální dokumentaci kubenretes a web \href{https://www.tkng.io/}{The Kubernetes Networking Guide}. Překlad adres na jednotlyvých nodech zajišťje komponenta \textit{kube-proxy}, často pomocí \textit{IPtables}. Implentace překladu adres se může měnit dle použitého CNI. Objekt Service není přímo adresovatelný pomocí IP adresy. Adresovatelnost zajišťuje objekt \textit{Endpoint}, respektivě objekt \textit{EndpointSlice}, tento objekt je úzce spojen s objektem Service. Rozsah defaultně přidělovaných IP adres pro Services je uchován v  proměnné \verb|service_cluster_ip_range|, defaultně se jedná o rozsah \verb|10.43.0.0/16| \cite{suserancher_2023_rancher}
+
+
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.60\textwidth]{images/service1.png}
+    \caption[Caption1]{Caption1 \cite{betz_2017_service}}
+    \label{fig:service1}
+\end{figure}
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.60\textwidth]{images/service2.png}
+    \caption[Caption2]{Caption2 \cite{betz_2017_netfilter}}
+    \label{fig:service2}
+\end{figure}
+
+Takto popsané použití Service je pouze jedním ze tří základních módů Service. Těmito módy jsou \textit{ClusterIP}, \textit{NodePort}, \textit{LoadBalancer}. \cite{poulton_2022_the}%\footnote{Headless mode je nyní záměrně vynechán, jelikož se nejedná o standardní mód. tento mód bude vysvětlen v kapitole ??}
+
+\subsubsection{ClusterIP}
+Cluster IP je nejzákladnější způsob fungování Service. V tomto módu plní všechny výše popsané služby. Tento mód se používá převážně pro interní komunikaci Podů v klastru. \cite{thekubernetesauthors_2023_service}
+\subsubsection{NodePort}
+Node port je variace předešlého ClusterIP módu. Kromě zmíněných funkcionalit zároveň vystavuje službu i mimo interní síť klastru. Daná služba (v tomoto módu) bude dostupná Pod definovaným portem na všech IP adresách samotných nodes. Za tuto funkcionalita je také zodpovědná komponenta \textit{kube-proxy}. Při příchodu paketu na danou adresu nodu je adresa přeložena na adresu Podu, stejně jak tomu je v případě komunikace po interní síti. \cite{thekubernetesauthors_2023_service}   
+\subsubsection{LoadBalancer}
+LoadBalancer je dle Nigel Poulton \cite{poulton_2022_the} nejpoužívanějším módem Service. Tento mód je do jisté míry podobný variantě \textit{NodePort}. Také poskytuje veškeré funkcionalit z \textit{ClusterIP} a také umožňuje a adresovat interní service z externí sítě. Pro vystavení Service do okolní sítě vytváří unikátní IP adresu, která je adresovatelná z vnějšku sítě. Proto aby tato funkcionalita fungovala, musí být zajištěna funkcionalita LoadBalancingu. V případě použití poskytovatelů klaudových služeb je tato funkcionalita nabízena jako poskytovateli. V případě on-preimse řešení lze využít softwerových implementaci loadbalanceru jako například MetalLB. Pro robustnější řešení lze zajistit hardwarovou podporu Loadbalancingu. \cite{thekubernetesauthors_2023_service}
+
+
+% Problém nastává ve chvíli, kdy je potřeba adresovat pod s neznáme IP adresu uvnitř klastru. Tento problém nastává často, například při použití objektu Deployment. Deployment zaručuje běh potřebných podů, ale nijak nedefinuje jaká IP adresa bude podům přidělena. Dokonce se v tomto případě může IP adresa po dobu existence Deploymentu měnit. Toto značně kompilkuje komunikaci mezi pody v klastru. Zmíněný problém se v anglické literatuře označuje jako \textit{service discovry}, do českého jazyka by se dalo přeložit jako \textit{objevování služeb}. \\ Druhým řešení je využití kubernetes objektu \textit{Service}. \\ Service je objekt kubernetesu, který pomáhá s síťování nejen uvnitř clusteru. Tento objekt abstrahuje komunikaci se službami, které jsou dostupné po síti. Službou budeme myslet libovolný koncový bod (endpoint), který reaguje na TCP, UDP požadavky.\footnote{pozor, neplést službu a objekt Service} Příkladem této služby může být \\ Komunikaci abstrahuje tím, že shlukuje skupinu podů a tyto pody vystavuje pod známou adresou. Často se Service přírovnává k \textit{load-balancer}, jelikož funguje velmi podobně. Díky této abstakci je možné komunikovat s Service, které IP adresa je dohledatelná v vnitřnm DNS. Objekt a služba Service pak zajití, že se komunikace dostane až na požadovaný pod, případně množinu podů. Díky tomuto mohou aplikace v kubernetes delegovat porblém \textit{service discovry} právě na službu Services. \\ Služba Service může pracovat ve čtyřech základních módech: \\ Objekt Service n8m umožuje adresovat pod, případně skupinu podů, pomocí stálé IP adresy, případně DNS jména. Service se za nás stará o adresování podů, které majíí ephemerla IP adresu. V případě nasazení aplikací jako typu deploiment se tedy nemusíme starat o potenciálně se měnící IP podu. \footnote{zdroj: https://kubernetes.io/docs/concepts/services-networking/service/, https://www.tkng.io/services/} \\ \footnote{https://deepkb.com/CO_000014/en/kb/IMPORT-1f5d92ef-6897-34d3-8f15-6bdf5ded890c/service}
+
+\subsection{Ingress}
+\textbf{Zavest konvenci jednosmerne komunikace (komunikace jako INPUT na FW)}
+
+Jedním z velmi často využívaným objektem kubenretes z kategorie síťování je \textit{Ingress}. \textit{Ingress} je relativně nový objekt v Kubernetes, do standardního API byl zařazen ke konci roku 2020 \cite{k8scirobot_2020_merge}. Do této doby doby byl veden pouze jako \textit{v1beta1} \cite{kashin_2021_gateway} a nebyl tak znám jako dnes.
+
+Ingress je v oficiální dokumentaci uveden jako \textit{API objekt, který spravuje externí přístup k Services vně klastru, typicky pomocí HTTP. Ingress může poskytovat služby loadbalancngu, SSL a routování na základě doménových jmen.} \cite{thekubernetesauthors_2023_ingress} Jedná se tedy o objekt, který vystavuje přístup k objektům typu Servcices uvnitř klastru. Ingress si proto lze představit jako vstupní bránu celého klastru, která umožujě dostupnost některých aplikací v klasru okolnímu světu. Velmi dobře je toto znázorněno na schématu níže \ref{fig:ingres}, která znázorňuje klienta, který přistupuje pomocí Ingress a Service až k jednotlivým Podum. 
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.90\textwidth]{images/ingress.png}
+    \caption[Ingres]{Ingres \cite{thekubernetesauthors_2023_ingressdiagram}}
+    \label{fig:ingres}
+\end{figure}
+
+Mohlo by se zdát, že \textit{Ingress} je duplicitním řešením pro již existující objekt \textit{Service} v reřimu \textit{NodePort} nebo \textit{LoadBalancer}. Je pravda, že podobné chování lze docílit pouze za použití Service. Ingres ale navíc doplňuje a rozšiřuje některé funkce \textit{Serrvice} a zároveň řeší některé z problémů, které mohou při použití \textit{Service} nastat. Zároveň je Ingres často preferovaným způsobem pro vystavování aplikací, před čistým použitím Service a to z dvou hlavních důvodů.
+
+Prvním důvodem je kontrola routování. V případě použití Services pro účely vystavení služeb běžících v sítí Kubernetes lze routování nastavit pouze na síťové respektive transportní vrstvě dle ISO/OSI modelu. Service v módu nodePort nám umožňují nastavovat routování pouze za pomocí portů a typu transportního protokolu (TCP a UDP). V případě Service typu LoadBalancer zle routování kontrolovat navíc pomocí IP adres. Toto může být značně omezující, pro různé typy služeb (jako například loadbalacing\ldots) může dávat smysl kontrolovat routování pomocí protokolů výších vrstev. Právě možnost kontroly routování až za pomocí aplikační vrstvy Ingres přináší.
+
+Druhým důvodem, proč Ingres hojně využívaný je fakt, že může velmi omezit finanční nároky na vystavování aplikací v komerčních klaudech, jako jsou Azure, AWs, Google... Velmi často se stává, že poskytovatele klaudových služeb si účtují poplatky za každou existující veřejnou IP adresu a zároveň za její konfiguraci. Tyto poplatky se pak mohou účtovat za každou LoadBalaner Service. V případě použití objektu Ingress se zodpovědnost za loadbalancing přenese dovnitř samotného klastru a zároveň pro fungování Ingres bude potřeba pouze jedna veřejná IP adresa. Díky tomuto lze znatelně omezit výdaje, při použití veřejných poskytovatelů klaudů.
+
+\subsubsection{Implementace Ingress}
+Důležité je zmínit, že Ingress je pouze API, které Kubernetes definuje. Jednotlivá implementace tohoto objektu se může lišit v závislosti na použitém kontroleru. V případě jednotlivých implementací se bavíme o implementaci samotného Ingress kontroleru. V tomto případě se jedná o modul, který rozumí definovanému API, dle kterého plní potřebné funkce. Jednotlivé implementace kontrolerů se mohou výrazně lišit, dle dané infrastruktury, prostředí a potřeb použití. Zároveň je Ingress API dosti volné a umožňuje rozšíření pomocí CRD (objekt CRD vysvětlen v poslední kapitole \ref{CRD}). Jak již bylo zmíněno, Ingress dlouhou dobu nebyl součástí Kuberenets. Toto vedlo k tomu, že vznikali řešení třetích stran \cite{kashin_2021_gateway}. Proto si myslím, že je Ingress API navrženo velmi volným způsobem, aby co nejméně limitovalo již existující řešení.
+
+Příkladem kontrolerů implementující funkci Ingress, které jsou přímo podporovány Kubernets  jsou: \textit{AWS Load Balancer Controller}, \textit{Google-Cloud LoadBalancer controller}, \textit{Ingress NGINX Controller}. Komtrolery třetích stran pak implementují kontrolery pro Azure Cloud \ldots \cite{thekubernetesauthors_2023_ingress}
+
+\subsubsection{Routování pomocí aplikační vrstvy Ingress}
+Jak již bylo zmíněno, tak Ingress umožňuje nastavovat routování dle nejvyšší vrstvy abstrakce ISO/OSI modelu, konkretně pomocí http protokolu. Pro účely pochopení routování se nyní zaměříme pouze na samotný protokol HTTP bez jakéhokoliv zabezpečeni jako \textit{TLS}.
+
+Pro definici routování Ingres používá list pravidel (rules). Tyto pravidla pak konfigurují samotný Ingress kontroler, prvky listu definují pravidla pro routování. Příklad pravidel lze vidět níže.
+\input{text/code/sample_ingress}
+
+První způsob, kterým lze kontrolovat routování je DNS jméno, které je použito pro samotný přístup k servisám v klastru. DNS jméno lze specifikovat dle standardu RFC 3986 jako část URI označovaná \textit{host}. Momentálně Ingress nepodporuje specifikování portu pomocí oddělovače \uv{:}. Možnost specifikace pomocí portu je diskutována.  Jediný podporovaný port je 80 respektive 443 pro https. Pomocí nastavení routování lze dobře oddělovat jednotlivé přístupy. Příkladem by mohly být odlišné Service pro backend a frondendovou část aplikace, kdy obě Services jsou dostupné ze stejné IP adresy ale Pod jiným doménovým jménem \textit{front-end.example.com} respektive \textit{back-end.example.com}.
+
+Druhý způsob routování, které je možné specifikovat pomocí Ingress jsou cesty. V kontextu Ingress cesta označuje část URI dle RFC 3986, která je označovaná jako \uv{path}. Díky tomuto lze oddělit například verze aplikací. Takové použití by mohlo vypadat tak, že \textit{back-end.example.com/v1} bude odkazovat na verzi jedna aplikace a \textit{back-end.example.com/v2} bude odkazovat na verzi 2. Při konfiguraci lze cesty lze specifikovat, zda danému pravidlu mají odpovídat všechny cesty s daným prefixem, nebo pouze cesty, které přesně odpovídají danému vzoru. Případně lze určit, že pravidlo pro cestu má být takzcaně implementačně specifické. V tomto případě je chování definované samotnou implementací kontrolleru. \cite{thekubernetesauthors_2022_ingress}. Výše popsané způsoby routování lze kombinovat
+
+Toto jsou způsoby definice routování, které Ingress nabízí. Ve chvíli, kdy ingerss přijme požadavek, který uspokojí vydefinovaná pravidla, pak přeposílá požadavek dále do klastru a plní tak funkci reverse proxy. Ingress je určen k tomu, aby požadavky přeposílal na objekty Service. Tyto požadavky jsou pak díky Service doručeny na potřebné Pody a aplikace běžící uvnitř. Reference na tyto Service jsou součástí zmíněných pravidel pro routování. I přesto, že Ingress je myšlen převážně pro poskytovaná proxy proxy pro Service, je možné využít i pro libovolně jiné účely. I přesto, že toto použití je nestandardní, Ingress API je pro tyto účely připraveno.
+
+\subsubsection{Šifrování pomocí Ingress}
+Doposud popsaná funkce routování je závislá na datech HTTP protokolu. V případě, komunikace není zabezpečena, pak jsou tyto data volně dostupná a Ingress s nimi může pracovat. V případě, že by byla komunikace mezi klientem a aplikací v Kubernets šifrovaná pomocí TLS, nemůže Ingress parametru v HTTP datech vyříst (pokud nemá přístup ke klíčům, použitý pro šifrování). Z tohoto důvodu nabízí ingess i možnost zprostředkování TLS šifrování pro komunikaci mezi klienty a samotným Ingress objektem. Delegace šifrování na samotný Ingress má dvě zásadní výhody, oproti šifrování až na straně aplikace v klastru. \cite{poulton_2022_the}
+
+První výhodou je, že Ingress má přístup k datům. Jelikož komunikaci sám šifruje, pak může nahlížet i do dat komunikace a díky tomu poskytovat zmíněné routování dle parametrů HTTP protokolu.
+
+Ingress poskytuje jedno jednoduché řešení pro zabezpečení veškeré komunikace, která je vedena přes objekt Ingress. Toto je druhá výhoda tohoto řešení. Díky tomuto není zodpovědnost zabezpečení na vývojářích aplikace, ale na administrátorech daného klastru. Zároveň je logika šifrování implementované v Ingress kontroleru, což je preferovanější, než aby se o bezpečnost starali vývojáři klaudových aplikací. \cite{koke_2023_bezpen}
+
+\subsection{Egress}
+Výše popsaný objekt Ingress je určen pouze pro jednosměrnou komunikaci směrem do klastru. Při komunikaci směrem z klastru ven se často hovoří o takzvané egress funkcionalitě. Jak již název napovídá, egress označuje opačnou funkcionalitu a myšlenku oproti zmíněnému ingerss. I přesto, že textitín egress je zmíněný v oficiální dokumentaci Kubernetes, tak samotný Kubernets tuto funkcionalitu neimplementije ani nedefinuje. Komunikace z klastru ven proto není nijak zdokumentovaná v Kubernetes.
+
+O komunikaci z Podů klastru do veřejného internetu se primárně starají CNI pluginy. Defaultní nastavení většiny známých CNI pluginů, je provádět překlad adres přímo na uzlu klastru, kde daný běží Pod, který se chce spojit s veřejnou sítí. Tento způsob dává dobrý smysl, jelikož nevyžaduje žádnou konfiguraci ani složiitou implementaci. Zároveň, díky plánování Podu, nezatěžuje jednu část sítě, ale určitým způsobem balancuje síťovou zátěž mezi jednotlivé Pody. Samozřejmě může nastat chvíle, kdy je potřeba vést komunikaci určitým směrem, například přes jeden z dostupných uzlů klastru. Pro tyto účely je možné použít pokročilé CNI plugins, které tuto funkcionalitu nabízejí (například coil) \cite{yamamoto_2020_introducing}. Dalším možným řešením je použití nástroje třetích stran pro správu Service, jako je například consul. Je možné, že v budoucnu bude tento problém řešen standardně pomocí kubenretes, ale momentálně dokumentace uvádí, že to možné není. \cite{thekubernetesauthors_2022_network}
+
+%Ingres je navržen tak, aby sloužil jako obecný HTTP loadbalancer, který přeposílá požadavky jednotlivým apliakcím běžícím v klastru. Lze si ho představit jako vstupní bránu celého klastru, která umožujě dostupnost některých aplikací v klasru okolnímu světu. Objekt ingress je pouze definicí, nikoliv   
+
+%Prvním problémem je objekt do  a slouží k řešení dvou hlavních problémů, které dosavadní řešení pomocí služeb (services) neřeší
+
+%Posledním důležitým . Ingress je objekt, který propojuje interní síť klastru s okolním světem. Zároveň se jedná  objekt, který umožňuje komunikaci inicializovat pouze jedním směrem a to z okolní sítě do sítě interní \footnote{Jednosměrnou inicializací se myslí, jakým směrem je možné vyslat první paket spojení. Po \enquote{otevření} komunikačního kanálu je možné data posílat i směrem z klastru ven, ale první paket musí přicházet dměrem dovnitř. Jedná se o podobný princip, kdy se nastavuje firewall způsobem, který umožňuje komunikaci pouze směrem z počítače čí sítě ven. }. Tuto komunikaci zajištujě pomocí známých principů \textit{reverse proxy} a \textit{load balancingu}.
+
+%Mohlo by se zdát, že \textit{ingress} je duplicitním řešením pro již existující objekt \textit{Service} v reřimu \textit{NodePort} nebo \textit{LoadBalancer}. Není tomu tak, objekt \textit{ingress} doplňuje a rozšiřuje některé funkce \textit{Serrvice} a zároveň některé z problémů, které mohou při použití \textit{Service} nastat.

@@ -1,0 +1,19 @@
+\begin{lstfloat}
+\begin{lstlisting}[style=mybashstyle,
+caption={Ukázka reprezentace objektu SERVICE},
+label={sample:service}
+]
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name:  service-name
+spec:
+  selector:
+    app: pods-label # label of pod to identify 
+  type: ClusterIP   # type of service (LoadBalancer|ClusterIP|NodePort)
+  ports:
+  - port:  80               # exposed port by servise
+    targetPort:  8080       # port on pod
+\end{lstlisting}
+\end{lstfloat}

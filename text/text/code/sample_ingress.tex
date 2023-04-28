@@ -1,0 +1,17 @@
+\begin{lstfloat}
+\begin{lstlisting}[
+language=bash, caption={Ukázka prvidla pro objekt ingress}, label={sample:ingress}]
+---
+rules:
+- host: foo.com
+  http:
+    paths:
+    - path: /API
+      pathType: Prefix
+      backend:
+        service:
+          name: test
+          port: 
+            number: 80
+\end{lstlisting}
+\end{lstfloat}

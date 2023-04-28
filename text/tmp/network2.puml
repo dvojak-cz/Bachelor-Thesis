@@ -1,0 +1,16 @@
+@startuml
+nwdiag {
+  network . {
+      address = "172.16.16.x/24"
+
+      kmaster [address = "172.16.16.100"];
+      kworker1 [address = "172.16.16.101"];
+      kedge1   [address = "172.16.16.111"];
+  }
+  network edge1 {
+      address = "172.17.16.x/24";
+      kedge1       [address = "172.17.16.111"];
+      device01-01  [address = "172.17.16.120"];
+  }
+}
+@enduml

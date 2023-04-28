@@ -1,0 +1,32 @@
+\begin{lstfloat}
+\begin{lstlisting}[
+style=mybashstyle,
+caption={Ukázka konfigurace nastavení síťování v kubernetes},
+label={cmd:k8sNet}
+]
+# get list of nodes and their podCIDR range
+[_]$ kubectl get nodes -o json<~>| jq '[.items[]|{node:.metadata.name,podCIDR:.spec.podCIDR}]'<~>| yq<~>-P
+>>> - node: kedge1
+>>>   podCIDR: 10.244.2.0/24
+>>> - node: kmaster
+>>>   podCIDR: 10.244.0.0/24
+>>> - node: kworker1
+>>>   podCIDR: 10.244.1.0/24
+
+# get global cluster-cidr for cluster
+[_]$ kubectl cluster-info dump | grep -m 1 -oE 'cluster-cidr=[^"]+'
+>>> cluster-cidr=10.244.0.0/16
+
+# get list of pods and theyr internal IP addresses  
+[_]$ kubectl get pods -o json<~>| jq '[.items[] | {name:.metadata.name,ip:.status.hostIP,node:.spec.nodeName}]'<~>| yq<~>-P
+>>> - name: debug-edge-7b9bff85d4-j9t26
+>>>   ip: 172.16.16.111
+>>>   node: kedge1
+>>> - name: http-server-67b6fc474b-dhzll
+>>>   ip: 172.16.16.101
+>>>   node: kworker1
+>>> - name: kube-controller-manager-kmaster
+>>>   ip: 172.16.16.100
+>>>   node: kmaster
+\end{lstlisting}
+\end{lstfloat}

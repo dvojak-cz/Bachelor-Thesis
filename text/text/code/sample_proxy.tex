@@ -1,0 +1,19 @@
+\begin{lstfloat}
+\begin{lstlisting}[style=mybashstyle,
+caption={Ukázka konfigurace podu s Proxy},
+label={sample:proxy}
+]
+---
+apiVersion: apps/v1
+kind: Pod
+metadata:
+  name: sample-proxy
+  annotations:
+    k8s.v1.cni.cncf.io/networks: bridge-conf
+spec:
+  containers:
+    - name: proxy-tcp
+      image: alpine/socat
+      args: ["tcp4-listen:8080,fork", "tcp4-connect:172.17.16.120:8080"]
+\end{lstlisting}
+\end{lstfloat}

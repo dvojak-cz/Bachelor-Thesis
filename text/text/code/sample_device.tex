@@ -1,0 +1,23 @@
+\begin{lstfloat}
+\begin{lstlisting}[language=bash, caption={Ukázka CRD device}, label={sample:device}]
+---
+apiVersion: edge-operator.k8s.dvojak.cz/v1
+kind: Device
+metadata:
+  name: device01-01
+spec:
+  nodeName: kedge1
+  up: true
+  ipAddress: 172.17.16.120
+  components:
+    - name: backend
+      up: true
+      handlers:
+        - name: api server
+          protocol: HTTP
+          port: 443
+          endPoints:
+            - https://<path>/api/*
+            - https://<path>/version
+\end{lstlisting}
+\end{lstfloat}

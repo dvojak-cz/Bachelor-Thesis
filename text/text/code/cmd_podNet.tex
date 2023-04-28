@@ -1,0 +1,19 @@
+\begin{lstfloat}
+\begin{lstlisting}[style=mybashstyle,
+caption={Nastavení síťových prostředků v podu},
+label={cmd:podNet}
+]
+# Create sample pod and attatch to its terminal
+[1]$ kubectl run my-pod --image=nicolaka/netshoot:v0.9 -it --rm
+
+# List network interfaces
+[2]$ ip --br l
+>>> lo          UNKNOWN 00:...:00 <LOOPBACK,UP,LOWER_UP> 
+>>> eth0@if11   UP      06:...:8a <BROADCAST,MULTICAST,UP,LOWER_UP>
+
+# List network interfaces and IP adresses assiged to them
+[2]$ ip --br a
+>>> lo          UNKNOWN 127.0.0.1/8 
+>>> eth0@if11   UP      10.244.0.9/16  
+\end{lstlisting}
+\end{lstfloat}
