@@ -21,6 +21,9 @@ The implementation can be done purely in a virtual environment. If implemented i
 
 >Translated with www.DeepL.com/Translator (free version)
 
+## Doc
+For documentation please see `doc` dir or [bt.project.dvojak.cz](https://bt.project.dvojak.cz/).
+
 ---
 
 ## Working with repository
@@ -42,25 +45,25 @@ Since the repository contains binary files like images pdfs -- repository uses G
 
 ### Structure
 ```
-├─ ansible/                         definice prostředı́
-|  ├─ playbook/                     soubor obsahujı́cı́ instrukce pro nastavenı́ prostředı́
-|  ├─ inventory/
-|  └─ vars/
-├─ code/                            všechny zdojové kódy
-|  ├─ EdgeOperator/                 všechny zdojové kódy operatoru
-|  |  ├─ EdgeOperator.sln
-|  |  ├─ EdgeOperator/
-|  |  ├─ EdgeOperator.Tests/
-|  |  └─ sampleSrvers/              všechny zdojové pro testovánı́
-|  ├─ tcpServer/
-|  └─ udpServer/
-├─ doc/                             návod na rozběhnutı́ prostředı́ a instalaci operatoru
-├─ manifests/                       manifesty pro k8s
-|  ├─ deployAll/
-|  ├─ multus/
-|  └─ proxy/
-├─ scripts/                         pomocná scripty pro rozběhnutı́
-├─ text/                            text BP
+├─ ansible/                         definice prostředı́ pomocí ansible
+|  ├─ playbook/                     definice prostředı́ pomocí ansible
+|  ├─ inventory/                    seznam hosts pro andisble
+|  └─ vars/                         proměnné pro ansible playbooks
+├─ code/                            zdrojové kódy
+|  ├─ EdgeOperator/                 zdrojové kódy operatoru
+|  |  ├─ EdgeOperator/              operátor
+|  |  ├─ EdgeOperator.Tests/        unit testy
+|  |  └─ EdgeOperator.sln
+|  └─sampleSrvers/                  zdrojové kódy pomocných programů pro testovánı́
+|    ├─ tcpServer/
+|    └─ udpServer/
+├─ doc/                             návod na instalaci prostředı́ a instalaci operatoru
+├─ manifests/                       manifesty pro Kubenretes
+|  ├─ lab/
+|  └─ operator/
+├─ scripts/                         pomocná scripty pro instalaci prostředí
+├─ text/                            text bakalářské práce
 ├─ vagrant/                         adresář obsahujı́cı́ definice virtuálnı́ho prostředı́
-└─  readme.md                       stručný popis obsahu média
+├─ .github/                         definice pipelines na GitHub
+└─ readme.md                       stručný popis repositáře
 ```
