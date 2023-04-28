@@ -65,5 +65,5 @@ Since the repository contains binary files like images pdfs -- repository uses G
 ├─ text/                            text bakalářské práce
 ├─ vagrant/                         adresář obsahujı́cı́ definice virtuálnı́ho prostředı́
 ├─ .github/                         definice pipelines na GitHub
-└─ readme.md                       stručný popis repositáře
+└─ readme.md                        stručný popis repositáře
 ```
