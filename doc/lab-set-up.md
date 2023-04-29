@@ -83,8 +83,9 @@ exit
 ```
 
 ```bash
+cd vagrant
 # add other nodes to cluster
-scripts/joinClusterWithNodes.sh
+../scripts/joinClusterWithNodes.sh
 ```
 
 ### 4. Set up local env

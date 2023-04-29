@@ -28,4 +28,24 @@ spec:
           "dataDir": "/run/kube-edge/ipam-state"
       	}
     }
-
+---
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: host-conf
+spec:
+  config: |-
+    {
+      "name": "host-conf",
+      "type": "host-device",
+      "device": "enp0s9",
+      "ipam": {
+        "type": "static",
+        "addresses": [
+            {
+              "address": "172.17.16.50/24",
+              "gateway": "172.17.16.1"
+            }
+          ]
+      }
+    }
