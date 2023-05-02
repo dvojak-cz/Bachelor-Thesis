@@ -1,0 +1,89 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pull-e
+  labels:
+    jobgroup: pull-e
+spec:
+  ttlSecondsAfterFinished: 60
+  template:
+    metadata:
+      name: pull-e
+      labels:
+        jobgroup: pull-e
+    spec:
+      nodeName: kedge1
+      restartPolicy: OnFailure
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - image: alpine/socat
+        command: ["pwd"]
+        name: socat
+      - image: nginx
+        command: ["pwd"]
+        name: nginx
+      - image: nicolaka/netshoot:latest
+        command: ["pwd"]
+        name: netshoot
+      - image: trojaj12/tcp-server
+        command: ["pwd"]
+        name: tcp-server
+      - image: trojaj12/udp-server
+        command: ["pwd"]
+        name: udp-server
+      - image: ghcr.io/dvojak-cz/edge-operator:v0.1.2
+        command: ["pwd"]
+        name: edge-operator
+---
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pull-w
+  labels:
+    jobgroup: pull-e
+spec:
+  ttlSecondsAfterFinished: 60
+  template:
+    metadata:
+      name: pull-w
+      labels:
+        jobgroup: pull-w
+    spec:
+      nodeName: kworker1
+      restartPolicy: OnFailure
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - image: alpine/socat
+        command: ["pwd"]
+        name: socat
+      - image: nginx
+        command: ["pwd"]
+        name: nginx
+      - image: nicolaka/netshoot:latest
+        command: ["pwd"]
+        name: netshoot
+      - image: trojaj12/tcp-server
+        command: ["pwd"]
+        name: tcp-server
+      - image: trojaj12/udp-server
+        command: ["pwd"]
+        name: udp-server
+      - image: ghcr.io/dvojak-cz/edge-operator:v0.1.2
+        command: ["pwd"]
+        name: edge-operator
+
+

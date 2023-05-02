@@ -70,8 +70,7 @@ k get -n edgeoperator-system deployments.apps edgeoperator-operator -o yaml | \
 yq e '.spec.template.spec.containers[0].envFrom += [{"configMapRef": {"name":"strict-device"}}]' | \
 k apply -f -
 
-k apply 
-
+k apply doc/sample/extra/invalid.yaml
 ```
 
 
