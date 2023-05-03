@@ -13,5 +13,3 @@ spec:
       command: ["tail"]
       args: ["/dev/random"]
       imagePullPolicy: Always
-#  imagePullSecrets:
-#    - name: "regcred"
