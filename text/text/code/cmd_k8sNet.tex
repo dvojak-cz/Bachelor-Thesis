@@ -1,7 +1,7 @@
 \begin{lstfloat}
 \begin{lstlisting}[
 style=mybashstyle,
-caption={Ukázka konfigurace nastavení síťování v kubernetes},
+caption={[Konfigurace nastavení síťování v kubernetes]Konfigurace nastavení síťování v kubernetes \cite{thekubernetesauthors_2022_cluster}},
 label={cmd:k8sNet}
 ]
 # get list of nodes and their podCIDR range
@@ -17,7 +17,7 @@ label={cmd:k8sNet}
 [_]$ kubectl cluster-info dump | grep -m 1 -oE 'cluster-cidr=[^"]+'
 >>> cluster-cidr=10.244.0.0/16
 
-# get list of pods and theyr internal IP addresses  
+# get list of pods and their internal IP addresses  
 [_]$ kubectl get pods -o json<~>| jq '[.items[] | {name:.metadata.name,ip:.status.hostIP,node:.spec.nodeName}]'<~>| yq<~>-P
 >>> - name: debug-edge-7b9bff85d4-j9t26
 >>>   ip: 172.16.16.111

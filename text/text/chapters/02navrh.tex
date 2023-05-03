@@ -1,21 +1,23 @@
 \chapter{Definice problému a možná řešení}
 
 \begin{chapterabstract}
-Tato kapitola se zaměří na hledání problému popsáného v úvodní části. Cílem této kapitoly je představit různé způsoby řešení problému a poukázat na výhody respektive nevýhody daného řešení.
+Tato kapitola je zaměřena na hledání problému popsáného v úvodní části. Cílem této kapitoly je představit různé způsoby řešení problému a poukázat na výhody respektive nevýhody daného řešení.
 
-Pro porozumění této kapitoly je dobré být seznámen se základním fungování orchestrátoru Kubernetes a principy síťování, který tento orchestrátor nabízí.  
+Pro porozumění této kapitoly je dobré být seznámen se základním fungování orchestrátoru Kubernetes a principy síťování, které tento orchestrátor nabízí.  
 \end{chapterabstract}
 %Předchozí dvě sekce se zabývali pouze komunikací uvnitř klastru, která umožňuje komunikaci pouze mezi objekty Kubernetes. V případě potřeby komunikace mimo síť klastru Kubernetes poskytuje 3 řešení. port, loadbalancer, ven z kontejneru. Prvním způsobem je prostá komunikace z 
 
 
 \section{Definice problém}
-V úvodu a v zadání této práce je nastíněný problém komunikace mezi vnitřní sítí klastru a privátní sítí, která je dostupná alespoň z jednoho uzlů klastru. 
+V úvodu a zadání této práce je nastíněný problém komunikace mezi vnitřní sítí klastru a privátními sítěmi, které přiléhají alespoň k jednoho z uzlů klastru. 
 
-Síťovou komunikací budeme myslet komunikaci probíhající na síťové vrstvě ISO/OSI modelu konkrétně pomocí protokolu IP, pro účely této práce se omezíme na protokoly TCP, UDP a HTTP.
+V rámci této kapitoly bude síťová komunikace označkovat komunikaci probíhající na síťové vrstvě referenčního ISO/OSI modelu - konkrétně pomocí protokolu IP. Pro účely této práce se omezíme na protokoly TCP, UDP a HTTP.
 
-Kubernetes poskytuje řešení pro několik typů síťové komunikace. Nejzákladnějším z nich je komunikace mezi libovolnými Pody, kteří jsou součástí jednoho klastru. Pro tento druh datového přenosu nepřináší Kubernetes žádnou formu omezení. Přenos je umožněn plně, všemi směry. Komunikace směrem do klastru z okolní sítě také není nijak zvláštně omezena. Pro tuto komunikaci lze využít některé ze standardních objektů, které Kubernetes nabízí (Ingress, Service). Tento druh přenosu vyžaduje konfiguraci klastru, ale je také umožněn bez jakéhokoliv omezení.
+Kubernetes poskytuje řešení pro několik typů síťové komunikace. Nejzákladnějším z nich je komunikace mezi Pody, které jsou součástí jednoho klastru. Pro tento druh datového přenosu nepřináší Kubernetes žádnou formu omezení. Přenos je umožněn plně, všemi směry. 
 
-Posledním druhem komunikace je spojení klastru s okolní sítí, ve směru do okolní sítě. Toto spojení je bezproblémové v případě, že aplikace v klastru adresuje objekt, který je veřejně dostupný\footnote{Veřejně dostupným objektem budeme chápat libovolný server, který je dostupný ve veřejné síti internetu, a server, který je dostupný ze všech výpočetních uzlů klastru} v okolní síti. Příkladem takového spojení je například požadavek na veřejnou DNS službu. V případě, že některá z aplikací běžících v Kubernetes se obrátí například na server \verb|8.8.8.8|, pak komunikace proběhne bez potíží. Požadavek je na jednom z uzlů klastru pozměně, tak aby byl validním v okolní síti mimo klastr (typicky je pozměněna hlavička IP protokolu - pomocí SNAT) a poté je požadavek vyslán do okolní sítě klastru.
+Komunikace směrem do klastru z okolní sítě také není nijak zvláštně omezena. Pro tuto komunikaci lze využít některé ze standardních objektů, které Kubernetes nabízí (Ingress, Service). Tento druh přenosu vyžaduje konfiguraci klastru, ale je umožněn bez jakéhokoliv omezení.
+
+Posledním druhem komunikace je spojení klastru s okolní sítí, ve směru komunikace do okolní sítě. Toto spojení je bezproblémové v případě, že aplikace v klastru adresuje objekty, které jsou veřejně dostupné\footnote{Veřejně dostupným objektem budeme chápat libovolný server, který je dostupný ve veřejné síti internetu, a je dostupný ze všech výpočetních uzlů klastru} v okolní síti. Příkladem takového spojení je požadavek na veřejnou DNS službu. V případě, že některá z aplikací běžících v Kubernetes se obrátí například na server \verb|8.8.8.8|, pak komunikace proběhne bez potíží. Požadavek je na jednom z uzlů klastru pozměně, tak aby byl validním v okolní síti mimo klastr (typicky je pozměněna hlavička IP protokolu - pomocí SNAT) a poté je požadavek vyslán do okolní sítě.
 
 Problém nastává, pokud je vyžadována komunikace s okolní \textit{privátní} sítí. Privátní sítí myslíme síťový segment, který není dostupný ve veřejném internetu a zároveň není dostupný ze všech uzlů klastru. Tato situace je ilustrována na schématu \ref{fig:schema} níže.
 
@@ -26,25 +28,29 @@ Problém nastává, pokud je vyžadována komunikace s okolní \textit{privátn�
     \label{fig:schema}
 \end{figure}
 
-Ve schématu jsou uvedeny dva sítové segmenty. \textit{internal\_Kubernetes} reprezentuje interní síť klastru - \verb|10.244.x.x/16| je pak rozsah definovaný proměnnou \verb|PodCIDR|. Klastr se skládá z trojce výpočetních uzlů kmaster, kworker, kedge. \textit{private\_network} označuje privátní síťoví segment. Tento segment má přidělen rozsah IP adres \verb|172.17.16.x/24| a obsahuje dvě koncová zařízení (device01-01, device01-02). Síťový segment je zcela izolovaný s výjimkou napojení na zařízení kedge.
+Ve schématu jsou uvedeny celkem tři sítové segmenty. Síť \textit{internal\_kubernete} reprezentuje interní síť klastru - \verb|10.244.x.x/16| je rozsah definovaný proměnnou \verb|PodCIDR|. Klastr se skládá z čteřice výpočetních uzlů kmaster, kworker, kedge01, kedge02. 
 
-V uvedeném příkladu je privátní síť a interní síť spojena pouze jedním z uzlů klastru \textit{kedge}. Tento uzel je do privátní sítě \textit{internal\_Kubernetes} a interní Kubernetes sítě \textbf{rivate\_network} připojen pomocí dvou různých sítových kartet. V obecném případě může více uzlů být připojeno do více privátních sítí a zároveň jedna privátní síť může být propojena s klastrem více uzly. Uzly, které takto propojují privátní síť klastru a vnitřní síť Kubernetes mudeme nazývat \textit{edge uzly}
+Sítě \textit{private\_network01} a \textit{private\_network02} označují přilehlé privátní síťové segmenty. Omezme se na \textit{private\_network01}. Segment \textit{private\_network01} má přidělen rozsah IP adres \verb|172.17.16.x/24| a obsahuje dvě koncová zařízení (device01-01, device01-02). Síťový segment je zcela izolovaný s výjimkou napojení na zařízení kedge01.
+
+V uvedeném příkladu je privátní síť a interní síť spojena pouze jedním z uzlů klastru \textit{kedge01}. Tento uzel je do privátní sítě \textit{internal\_kubernetes01} a interní Kubernetes sítě \textit{internal\_kubernete} připojen pomocí dvou různých sítových kartet. V obecném případě může více uzlů být připojeno do více privátních sítí a zároveň jedna privátní síť může být propojena s klastrem více uzly. Uzly, které takto propojují privátní síť a vnitřní síť Kubernetes budou označovány jako \textit{edge uzly}.
+
+\bigskip
 
 V případě takového nastavení není přímo komunikace objektů klastru se zařízeními v privátních sítích umožněna (ve směru z klastru k zařízením).
 
 Následující část práce bude zaměřena na hledání způsobu, jakým zmíněnou komunikaci umožnit tak, aby co nejvíce vyhovovala stanoveným požadavkům.
 
 \subsection{Požadavky na řešení problému}\label{sec:pozadavky}
-Pro účel práce dává smysl stanovit požadavky na hledané řešení. Požadavky na hledané řešení jsou následující:
+Pro účel práce dává smysl stanovit požadavky na hledané řešení. Požadavky jsou následující:
 \begin{itemize}
-    \item Oboustrannost komunikace\\
-    Komunikace by měla umožňovat oba směry -- z klastru do privátní sítě a z privátní sítě do klastru. I přesto, že jeden ze směrů je umožněn přímo návrhem Kubernetes, tak konfigurace této komunikace není jednoduchá. Proto bude vyžadováno, aby řešení poskytovalo jednoduchý způsob pro komunikaci směrem do klastru.    
+    %\item Oboustrannost komunikace\\
+    %Komunikace by měla umožňovat oba směry -- z klastru do privátní sítě a z privátní sítě do klastru. I přesto, že jeden ze směrů je umožněn přímo návrhem %Kubernetes, tak konfigurace této komunikace není jednoduchá. Proto bude vyžadováno, aby řešení poskytovalo jednoduchý způsob pro komunikaci směrem do klastru.
     \item Obecnost řešení\\
     Řešení my mělo pokrýt všechny možné, výše zmíněné, situace -- mělo by umožňovat propojení s více privátními sítěmi za použití více než jednoho uzlu.
     \item Podpora TCP, UDP\\
     Řešení by mělo plně podporovat komunikaci pomocí síťových protokolů TCP a UDP a protokolů z vyšších abstrakčních kategorií
     \item Jednoduchost\\
-    Řešení by mělo být jednoduché z pohledu uživatele případně administrátora klastru. Jeho používání by nemělo být nijak zvláště náročné s porovnáním používání jiných služeb Kubernetes. To samé platí pro jeho zavedení a připadnou integraci do již existujícího Kubernets klastru. Používání i zavedení řešení by mělo podporovat zavedené způsoby komunikace s klastrem.
+    Řešení by mělo být jednoduché z pohledu uživatele případně administrátora klastru. Jeho používání by nemělo být nijak zvláště náročné s porovnáním používání jiných služeb Kubernetes. To samé platí pro jeho zavedení a připadnou integraci do již existujícího Kubernets klastru. Používání by mělo podporovat zavedené způsoby komunikace se systémem Kubernetes.
     \item Bezpečnost řešení\\
     Řešení by mělo být bezpečné a nijak významně by nemělo snižovat bezpečnost systému při použití.
 \end{itemize}
@@ -118,7 +124,7 @@ Již v teoretické části bylo zmíněno, že Kubernetes k síťování použí
 
 V dřívějších verzích Kubernetes bylo možné definovat cestu k adresáři s konfigurací pomocí \verb|--cni-conf-dir|, tento flag byl ve verzi \verb|1.24| odstraněn. \cite{k8scirobot_2020_merge} , \cite{thekubernetesauthors_2022_networkPlugins} Cesta k CNI modulům je možné natavit pomocí proměnné prostředí \verb|CNI_PATH| na daném uzlu.
 
-\subsection{Kubernetes Network Custom Resource Definition De-facto Standard}\label{sec:kncrdds}
+\subsection{Kubernetes Network Custom Resource Definition De-facto Standard}\label{sub:kncrdds}
 Potřeba lépe kontrolovat síťové prostředky uvnitř Podu a přímo možnost vytvářet Pody s více síťovými rozhraními byla diskutovaná na konferenci \textit{KubeCon + CloudNativeCon North America} v proce 2017 v Austinu  \cite{woods_2018_a}. Na této konferenci vznikla skupina \textit{NPWG}(Network Plumbing Working Group). NPWG vznikla primárně za účelem umožnit vytváření Podů s více sítovými rozhraními. Cílem skupiny bylo vytvořit specifikaci pro konfiguraci přídavných síťových rozhraní a následně implementovat jednoduché řešení, pro účely prezentace výsledků.
 
 Zmíněná specifikace, která byla skupinou NPWG se nazývá \textit{Kubernetes Network Custom Resource Definition De-facto Standard}. Tento standard slouží pro definici objektů a API pro vývojáře, kteří chtějí umožnit rozšířit standardní chování Kubernetes, o Podu s více sítovými rozhraními. Specfikace definuje následující:

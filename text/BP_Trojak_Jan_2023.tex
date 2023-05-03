@@ -46,16 +46,16 @@
 \ctufitabstractCZE{
 Tato práce se zabývá možnostmi síťování v systému Kubernetes. Cílem práce bylo rozšířit Kubernetes o možnost adresace a komunikace cloudu se zařízeními v privátních sítích. Známá řešení poskytují pouze komunikaci pomocí vysokoúrovňových protokolů. Cílem bylo nalézt řešení, které by podporovalo protokoly nižších vrstev ISO/OSI.
 
-Práce představuje možnost rozšíření systému Kubernetes o zmíněnou funkcionality. Tento způsob umožňuje komunikaci pomocí TCP a UDP protokolů se zařízeními v privátních sítích. Představené řešení nabízí flexibilitu použití a nepředstavuje žádné omezení omezující standardní použití. Řešení je realizováno pomocí zavedených standardů.  
+Práce představuje možnost rozšíření systému Kubernetes o zmíněnou funkcionality síťové komunikace. Tento způsob umožňuje komunikaci pomocí TCP a UDP protokolů se zařízeními v privátních sítích. Představené řešení nabízí flexibilitu použití a nepředstavuje žádná omezení pro standardní použití systému Kubernetes. Řešení je realizováno pomocí zavedených standardů pro rozšiřování systému.  
 
-Výsledky této práce poskytují širší možnosti pro použití systému Kubernetes. Díky tomuto rozšíření je možné lépe využít systém Kubernetes v oblastech testování, smart cities a dalších oblastech pracujících se zařízeními v privátních sítích. 
+Výsledky této práce poskytují širší možnosti pro použití systému Kubernetes. Díky tomuto rozšíření je možné lépe využít systém Kubernetes v oblastech testování, smart cities a dalších oblastech pracujících se zařízeními v privátních sítích.
 
 %Výstupem práce je... Výsledek... Co ten operator umi... Zaver (prinosem teto prace)...
 }
 \ctufitabstractENG{
 This thesis explores the networking capabilities of Kubernetes. The aim of the thesis was to extend Kubernetes with the possibility of addressing and communicating with devices in private networks. Known solutions only provide communication using high-level protocols. The goal was to find a solution that would support communication using lower layer ISO/OSI protocols.
 
-This thesis presents the possibility of extending the kubernetes system with the mentioned functionalities. This method allows communication with devices in private networks using TCP and UDP protocols. The presented solution offers flexibility of use and does not present any limitation restricting standard use. The solution is implemented using established standards.  
+This thesis presents the possibility of extending the kubernetes system with the mentioned functionalities of network communication. This method allows communication with devices in private networks using TCP and UDP protocols. The presented solution offers flexibility of use and does not present any limitation restricting standard use of Kubernetes. The solution is implemented using established standards for extending the system.
 
 The results of this work provide wider possibilities for the use of Kubernetes. With this extension, it is possible to make better use of Kubernetes in the areas of testing, smart cities and other areas working with devices in private networks.
 }
@@ -168,9 +168,11 @@ The results of this work provide wider possibilities for the use of Kubernetes. 
 % This is a place to thank people for helping you. It is common to thank your supervisor.
 %%%%%%%%%%%%%%%%%%%
 \begin{acknowledgmentpage}
-	Chtěl bych především poděkovat vedoucímu práce Ing. Tomáši Vondrovi, Ph.D., který velmi pomohl při vzniku této práce ať už věcnými podněty, nebo nasměrováním které vedli k lepším výsledkům. Zároveň bych mu chtě poděkovat za poskytnutí velké volnosti, díky které jsem mohl konkrétněji zaměřit na témata mě blízká.
+	Chtěl bych poděkovat vedoucímu práce Ing. Tomáši Vondrovi, Ph.D., který velmi pomohl při vzniku této práce ať už věcnými podněty, nebo nasměrováními které vedly k lepším výsledkům. Zároveň bych mu chtě poděkovat za poskytnutí velké volnosti, díky které jsem se mohl konkrétněji zaměřit na témata mně blízká.
+ 
     Dále bych chtěl poděkovat Daně Suchomelové, Danielu Hromádkovi a Samuelu Švalichovi za poskytovanou psychickou podporu a prostory pro hacketony, při kterých primárně tato práce vznikla.
-    V neposlední řadě bych chtěl poděkovat open-source komunitě za vytváření skvělých produktů, které jsou dostupné široké veřejnosti. 
+ 
+    V neposlední řadě bych chtěl poděkovat open-source komunitě za vytváření skvělých produktů, které jsou volně dostupné široké veřejnosti. 
 \end{acknowledgmentpage} 
 %%%%%%%%%%%%%%%%%%%
 % ACKNOWLEDGMENT END
@@ -220,8 +222,6 @@ neomezené.
 %%%%%%%%%%%%%%%%%%%
 \chapter{Seznam zkratek}
 \input{text/others/seznam_zkratek}
-\chapter{Seznam pojmů}
-\input{text/others/seznam_pojmu}
 %%%%%%%%%%%%%%%%%%%
 % ABBREVIATIONS END
 %%%%%%%%%%%%%%%%%%%

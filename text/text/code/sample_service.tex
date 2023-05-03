@@ -10,10 +10,10 @@ metadata:
   name:  service-name
 spec:
   selector:
-    app: pods-label # label of pod to identify 
+    app: pods-label # label of pod - for identification 
   type: ClusterIP   # type of service (LoadBalancer|ClusterIP|NodePort)
   ports:
   - port:  80               # exposed port by servise
-    targetPort:  8080       # port on pod
+    targetPort:  8080       # exposed port on pod
 \end{lstlisting}
 \end{lstfloat}

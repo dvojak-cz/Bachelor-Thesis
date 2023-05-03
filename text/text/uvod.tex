@@ -1,50 +1,48 @@
 \chapter*{Úvod}\addcontentsline{toc}{chapter}{Úvod}\markboth{Introduction}{Introduction}
 \setcounter{page}{1}
 
-Orchestrační nástroj (zkráceně orchestrátor) je nástroj, který slouží pro ulehčení práce s různými informačními systémy. Často se jedná o technologie složené z malých programů a modulů, které automatizují určité kroky. Ochestrátorů je velká řada z mnoha různých kategorií. Mezi nejznámější orchestrátory kontejnerových aplikací patří kubernetes. Právě tímto orchestrátorem se tato práce zabývá. \cite{goldberg_2019_workflow}
+Orchestrační nástroj (zkráceně orchestrátor) je nástroj, který slouží pro ulehčení práce s různými informačními systémy. Často se jedná o technologii složenou z malých programů a modulů, které automatizují a ulehčují práci. Ochestrátorů je velká řada z mnoha různých kategorií. Mezi nejznámější orchestrátory kontejnerových aplikací patří Kubernetes. Právě tímto orchestrátorem se tato práce zabývá. \cite{goldberg_2019_workflow}
 
-Kubernetes je orchestrační technologie, která poskytuje prostředí pro provoz aplikace na více serverech. Kubernetes tak vytváří a poskytuje jednotné prostředí pro správu aplikací. Toto prostředí se nazývá klastr. Kubernetes podporuje různé způsoby komunikací, mezi aplikacemi a službami v síti klastru, která je tvořena výpočetními uzly. Pro potřeby síťování se v kubernetes používá interní privátní virtuální síť, která je sdílena mezi všemi uzly. Tuto síť mohou využívat všechny objekty, které jsou součástí kubernetes.
+Kubernetes je orchestrační technologie, která poskytuje prostředí pro provoz aplikace na více serverech. Kubernetes tak vytváří a poskytuje jednotné prostředí pro správu aplikací, nazývané cloud. Kubernetes podporuje různé způsoby komunikací mezi aplikacemi a službami v síti cloudu. Toto prostředí je tvořeno více výpočetními uzly. Pro potřeby síťování, Kubernetes používá interní privátní virtuální síť, která je sdílena mezi všemi uzly systému. Tuto síť mohou využívat všechny objekty, které jsou součástí Kubernetes.
 
-Pro propojení vnitřní sítě s okolním světem poskytuje kubernetes standardizovaná řešení. Tyto standardní řešení komunikace, které kubernetes nabízí jsou primárně jednostranné, spoléhají se na komunikaci s veřejnými adresami a nenabízí přímou kontrolu nad tokem dat. Pro oboustrannou komunikaci se zařízeními v privátních sítích, které se nacházejí mimo zmíněnou virtuální síť není technologie v základnu připravena. Toto je značné omezení v případě, že do clusteru je potřeba připojit reálný hardwarový prvek, který nelze přímo integrovat do sítě clusteru. Takovými prvky jsou například jednoduchá zařízení, která sbírají data, různé periferie, testovaná zařízení\ldots Obecně je lze tyto zařízení označit jako externí hardwarové prvky.
+Pro propojení vnitřní sítě s okolním světem poskytuje Kubernetes standardní řešení. Tato standardní řešení komunikace, které systém nabízí jsou primárně jednostranné, spoléhají se na komunikaci s veřejnými adresami a nenabízí přímou kontrolu nad tokem dat. Pro spolehlivou oboustrannou komunikaci se zařízeními v privátních sítích, které se nacházejí mimo zmíněnou virtuální síť, není technologie v základu připravena. Toto je značné omezení v případě, že do systému je potřeba připojit reálný hardwarový prvek, který nelze přímo integrovat do sítě Kubernetes. Takovými prvky jsou například jednoduchá zařízení, která sbírají data, různé periferie, testovaná zařízení apod. Obecně je lze tato zařízení označit jako externí hardwarové prvky.
 
-Hardwarový prvek který není možné přímo přidat do sítě serverů není jednoduché k kubernetes clusteru připojit. Připojení takového zařízení je velmi náročné a pracné což je je v rozporu s hlavní myšlenkou orchestrace, která má usnadňovat práci, často formou automatizace.
+Hardwarový prvek, který není možné přímo přidat do sítě serverů, není jednoduché do Kubernetes klastru připojit. Připojení takového zařízení je velmi náročné a pracné což je v rozporu s hlavní myšlenkou orchestrace, která má práci usnadňovat.
 
-Tato práce se zaměřuje na možnost, jak rozšířit možnosti orchestrátoru kubernetes o možnost adresace a komunikace s hardwarovými periferiemi v privátních sítích při použití kubernetes. Zkoumaná komunikace s hardwarovými prvky bude probíhat pomocí \textit{TCP}, \textit{UDP} a \textit{HTTP} protokolů.
+Tato práce se zaměřuje na to, jak rozšířit možnosti orchestrátoru Kubernetes o možnost adresace a komunikace s hardwarovými periferiemi v privátních sítích. Zkoumaná komunikace s hardwarovými prvky bude probíhat pomocí \textit{TCP}, \textit{UDP} a \textit{HTTP} protokolů.
 
-Navržené řešení by mělo být obecné a nezávislé na nestandardním nastavení kubernetes. Zároveň by nemělo nijak ovlivňovat jakékoliv funkcionality kubernetes. 
+Navržené řešení by mělo být obecné a nezávislé na nestandardním nastavení Kubernetes. Zároveň by nemělo nijak ovlivňovat jakékoliv funkcionality systému. 
 
 \newpage
 
 \section{Motivace}
-Tato práce vnikla pro potřeby HIL\footnote{HIL (hardware in loop) je technika testování hardwarových zařízení, kde je zařízení testováno v simulovaném prostředí. Simulace prostředí nejčastěji probíhá pomocí matematických modelů, které generují signály pro dané zařízení.} testování v prostředí cloudu. Myšlenkou je nalézt způsob, jakým umožnit testování komunikace různých hardwarových prvků a simulací tak, aby bylo možné tyto prvky a simulace jednoduše kombinovat. Pro tyto účely je zapotřebí umožnit komunikaci mezi kubernetes a zařízeními, které nejsou připojené do internetlvé sítě. Díky integrování HIL testování do prostředí cloudu se zlepší možnosti testování. Zároveň se zjednoduší práce potřebná pro nastavování prostředí, pokud se využije stávajících orchestračních řešení.
+Tato práce vnikla pro potřeby HIL\footnote{HIL (hardware in loop) je technika testování hardwarových zařízení, kde je zařízení testováno v simulovaném prostředí. Simulace prostředí nejčastěji probíhá pomocí matematických modelů, které generují signály pro dané zařízení.} testování v prostředí cloudu. Hlavní myšlenkou je nalézt způsob, jak umožnit testování komunikace různých hardwarových prvků a simulací tak, aby bylo možné prvky a simulace jednoduše kombinovat. Pro tyto účely je zapotřebí umožnit komunikaci mezi Kubernetes a zařízeními, které nejsou připojené do interní sítě. Díky integraci HIL testování do prostředí cloudu se zlepší možnosti testování. Zároveň se zjednoduší práce potřebná pro nastavování prostředí.
 
 \section{Cíle práce}
-Cílem této práce je najít způsob, jakým zajistit adresaci a komunikaci s hardwarovými prvky, nacházející se mimo síť kubernetes. Zkoumána bude komunikace protokoly \textit{TCP} , \textit{UDP} a \textit{HTTP}. V případě, že nebude známo žádné řešení, které by splnilo kladené nároky, pak je za cíl návrh a implementace řešení pro výše popsaný problém.
+Cílem této práce je nalézt způsob, jak zajistit adresaci a komunikaci s hardwarovými prvky, nacházejícími se mimo interní síť Kubernetes. Zkoumána bude komunikace pomocí protokolů \textit{TCP} , \textit{UDP} a \textit{HTTP}. V případě, že nebude známo žádné řešení, které by splnilo kladené nároky, pak je za cíl považován návrh a implementace řešení pro výše popsaný problém.
 
 \section{Struktura práce}
 Práce je strukturována celkem do tří kapitol. První kapitola představuje základní koncepty systému Kubernetes. Hlavní část bude věnována možnostem síťování, které tento systém nabízí. Informace obsažené v teoretické části slouží jako stavební bloky pro zbytek této práce.
 
 Druhá kapitola je věnována samotnému problému adresace zařízeních v přilehlé interní síti cloudu. Zde je problematika představena převážně na teoretické úrovni. V této části jsou diskutovány možná řešení.
 
-Poslední, třetí kapitola popisuje realizaci řešení představeného v kapitole předchozí. Zde je popsáno prostředí použité při realizaci, konkrétní způsob podpory komunikace a implementace rozšíření systému Kubernetes.
+Poslední, třetí kapitola popisuje realizaci řešení představeného v kapitole předchozí. Zde je popsáno prostředí použité při implementaci, konkrétní způsob podpory komunikace a implementace rozšíření systému Kubernetes.
 
 \section{Dohoda se čtenářem}
-V této práci se budou často vyskytovat názvy objektů z systému Kubernetes. Tyto objekty budou uvedeny s velkými počátečními písmeny. Toto je zavedená konvence proto, aby se názvy objektů nepletli se slovy běžného jazyka. Tato konvence dává dobrý smysl zejména v anglicky psané literatuře, i přesto, že tato práce je psaná v jazyce českém, bude tato konvence dodržována. Příkladem objektu může být objekt typu Deployment s velkým \'D\'.
+V této práci se budou často vyskytovat názvy objektů ze systému Kubernetes. Tyto názvy budou uvedeny s velkými počátečními písmeny. Toto je zavedená konvence proto, aby se názvy objektů nepletly se slovy běžného jazyka. Tato konvence dává dobrý smysl zejména v anglicky psané literatuře. I přesto, že tato práce je psaná v jazyce českém, bude tato konvence dodržována. Příkladem objektu může být objekt typu Deployment s velkým počátečním \uv{D}.
 
-Základní pojmy, které jsou v práci použity se nachází na začátku této práce. V průběhu textu může být zaveden nový pojem, který je potřeba podrobněji vysvětlit. V případě zavedení takového pojmu bude pojem zvýrazněn odlišným písmem od okolního textu, aby byl čtenář upozorněn. Ukázkou by mohlo být například slovo \term{kernel}. Kernel (česky jádro) je část operačního systému, která přímo komunikuje s hardwarem počítače.  
-
-V případě, že se jedná o ukázku z příkazové řádky, bude použit specifický blok. Ukázkový blok je uveden ve výpisu kódu \ref{sample:cmd}.
+V případě, že je v práci uveden výpis z příkazové řádky, bude použit specifický blok. Ukázkový blok je uveden ve výpisu kódu \ref{sample:cmd}.
 
 Pokud se příkazy provádějí v různých prostředích, budou prostředí uvedena v hranatých závorkách. Pokud je prostředí jednotné, bude použit symbol podtržítka. Příkazy vždy načínají symbolem \verb|$|, výstupy konzole jsou uvedeny symbolem \verb|>>> |.
 \input{text/code/sample_cmd}
 
-Příkazy z těchto bloků jsou převeditelné na script pomocí následujícího příkazu \ref{cmd:exec} 
+Příkazy z těchto bloků jsou převeditelné na spustitelný script pomocí příkazu. který je uveden v ukázce \ref{cmd:exec} 
 \input{text/code/cmd_exec}
 
 \section{Prostředí a použité verze softwaru}
-Veškeré příklady jsou prováděny ve virtuálním stroji na systému \term{CentOS/7}. Virtuální prostředí lze spustit pomocí služby \term{vagarnt}. V případě potřeby lze virtuální prostředí nastavit pomocí následujících příkazů.
+Veškeré příklady jsou prováděny ve virtuálním stroji na systému \term{CentOS/7}. Virtuální prostředí lze spustit pomocí služby \term{Vagarnt}. V případě potřeby lze virtuální prostředí nastavit pomocí následujících příkazů.
 \input{text/code/sample_vm}
 
-Pro správné použití je potřeba mít nainstalovaný vagrant a libovolný podporovaný virtualizační nástroj (hypervisor).
+Pro správné použití je potřeba mít nainstalovaný Vagrant a libovolný podporovaný virtualizační nástroj (hypervisor).
 
-Veškeré informace v této práci se vztahují na Kubernetes verzi \verb|1.26.0|.
+Veškeré informace v této práci se vztahují k verzi Kubernetes \verb|1.26.0|.
