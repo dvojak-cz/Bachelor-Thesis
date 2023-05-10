@@ -1,0 +1,21 @@
+\begin{lstfloat}
+\begin{lstlisting}[
+caption={Implementace validace Device v Edge-Operator},
+label={pseudo:deviceValidation}
+]
+func ValidateDevice(Device device){
+    var errors = new([]string);
+
+    errors += validateIpAddress(device);
+    errors += validateNodeExists(device);
+    errors += validateNodeHasLabels(device);
+    errors += validateComponentsHasUniqueNames(device);
+    errors += validateProtocolCollision(device);
+
+    if(cloud.operator.strictValidation){
+        return Fail(errors);
+    }
+    return Success(errors);
+}
+\end{lstlisting}
+\end{lstfloat}

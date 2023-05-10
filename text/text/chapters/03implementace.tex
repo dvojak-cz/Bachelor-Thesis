@@ -1,29 +1,29 @@
 \chapter{Návrh řešení a implementace}
 \begin{chapterabstract}
-Tato kapitola popisuje návrh a implementaci řešení problému z předchozí kapitoly. Cílem této kapitoly navrhnout a vytvořit modul pro systému Kubernetes, který umožní jednoduchých způsobem propojit interní síť Kubernets a přilehlou privátní sítě. Součástí této kapitoly je ukázka a nastínění způsobu použití modulu.
+Tato kapitola popisuje návrh a implementaci řešení problému z předchozí kapitoly. Cílem této kapitoly je navrhnout a vytvořit modul pro systém Kubernetes, který umožní jednoduchým způsobem propojit interní síť Kubernetes a přilehlou privátní síť.
 \end{chapterabstract}
 
 \section{Prostředí}\label{prostredi}
-Celý vývoj, testování a ukázka probíhá ve prostředí virtuální. Díky tomuto je možné řešení vyzkoušet bez nutnosti hardwaru. Při definici prostředí byl kladen důraz na jeho snadnou replikovatelnost. Veškeré definice a konfigurace jsou dostupné v přiloženém archivu, který je kopií \href{veřejného repozitáře}{veřejného repositáře} na platformě GitHub. Přiložené médium zároveň poskytuje dokumentaci a návod k rozběhnuti samotného prostředí. Tato dokumentace je uložena v adresáři \verb|doc|.\footnote{Tato dokumentace prostředí je dosupná i na adrese \href{https://bt.project.dvojak.cz/}{bt.project.dvojak.cz}}
+Celý vývoj, testování a ukázka probíhá ve virtuálním prostředí. Díky tomu je možné řešení vyzkoušet bez potřeby hardwaru. Při definici prostředí byl kladen důraz na jeho snadnou replikovatelnost. Veškeré definice a konfigurace jsou dostupné v přiloženém archivu, který je kopií \href{https://github.com/dvojak-cz/Bachelor-Thesis}{veřejného repositáře} na platformě GitHub. Přiložené médium zároveň poskytuje dokumentaci a návod k rozběhnuti samotného prostředí. Tato dokumentace je uložena v adresáři \verb|doc/| v přiloženém archivu\footnote{Tato dokumentace prostředí je dostupná i na adrese \href{https://bt.project.dvojak.cz/}{bt.project.dvojak.cz}}.
 
-Vzhledem k tomu, že předmětem práce není instalace případně konfigurace prostředí a návod na zprovoznění je obsažen v přiložených souborech, bude zde postup nastavení prostředí zmíněn jen stručně.
+Vzhledem k tomu, že předmětem práce není instalace, případně konfigurace prostředí a návod na zprovoznění je obsažen v přiložených souborech, bude zde postup nastavení prostředí zmíněn jen stručně.
 
-Následující nastavení probíhala na sytému s operačním systémem \textit{debian-11}.
+Následující nastavení prostředí probíhalo na sytému s operačním systémem \textit{debian-11}.
 \subsection{Virtuální stroje}
- Pro virtualizaci byl využit hypervizor \textit{virtualbox-6.1} od společnosti Oracle. Virtualbox byl ovládán a konfigurován pomocí nástroje \textit{vagrant-2.3.4} od společnosti HashiCorp. Použité technologie a nástroj byly zvoleny, pro jednoduchou ovladatelnost a možnost definice prostředí formou zdrojového kódu. Díky tomuto je možné deklarativně definovat prostředí, které je snadno nasatvitelné a replikovatelné. 
+Pro virtualizaci byl využit hypervizor \textit{virtualbox-6.1} od společnosti Oracle. Virtualbox byl ovládán a konfigurován pomocí nástroje \textit{vagrant-2.3.4} od společnosti HashiCorp. Použité technologie a nástroj byly zvoleny pro jednoduchou ovladatelnost a možnost definice prostředí formou zdrojového kódu. Díky tomu je možné deklarativně definovat prostředí, které je snadno nasatvitelné a replikovatelné. 
 
-Pro účely vývoje byly vytvořeny celkem čtyři virtuální stroje. Každé z těchto zařízení vychází z definice vagrant boxu \verb|ubuntu/focal64|. Stroje \textit{kmaster}, \textit{kworker1}, \textit{kedge1} jsou servery, na kterých bude provozován kubenretes. Všechny tyto stroje jsou součástí jednoho klastru. Kube-edge je jediný virtuální stroj, který je připojen do dvou síťových segmentů. Tento server plní roli edge~uzlu\footnote{Edge~uzel označuje stroj, který propojují privátní síť klastru a vnitřní síť Kubernetes.}. Čtvrtým virtuální strojem je device01-01. Tento stroj reprezentuje zařízení umístěné v privátní síti. Zařízení device01-01 není součástí sítě Kuberetes. Konfigurace je znázorněna na schématu \ref{fig:lab} níže.
+Pro účely vývoje byly vytvořeny celkem čtyři virtuální stroje. Každé z těchto zařízení vychází z definice vagrant boxu \verb|ubuntu/focal64|. Stroje \textit{kmaster}, \textit{kworker1}, \textit{kedge1} jsou servery, na kterých bude provozován systém Kubenretes. Všechny tyto stroje jsou součástí jednoho klastru. Kube-edge je jediný virtuální stroj, který je připojen do dvou síťových segmentů. Tento server plní roli edge~uzlu\footnote{Edge~uzel označuje stroj, který propojují privátní síť klastru a vnitřní síť Kubernetes.}. Čtvrtým virtuální strojem je \textit{device01-01}. Tento stroj reprezentuje zařízení umístěné v privátní síti. Zařízení \textit{device01-01} není součástí sítě Kubernetes. Konfigurace síťování virtuálního prostředí je znázorněna na schématu \ref{fig:lab} níže.
 
-Kompletní konfigurace virtuálního prostředí je definována v souboru \verb|vagrant/Vagrantfile|. Tento soubor je parametrizovatelný pro potřeby úpravy prostředí. 
+Kompletní konfigurace virtuálního prostředí je definována v souboru \verb|vagrant/Vagrantfile|. Tento soubor je parametrizovatelný pro potřeby úprav prostředí. 
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.7\textwidth]{images/lab.pdf}
-    \caption{Caption}
+    \caption{Síťové nastavení virtuálního prostředí}
     \label{fig:lab}
 \end{figure}
 
 \subsection{Konfigurace serverů}
-Aby bylo možné provozovat kubenretes na serverch, je nutné servery nakonfigurovat a nainstalovat potřebné programy pro provoz klastru. Konfigurace a instalace je definovaná pomocí ansible playbooku\footnote{Playbook označuje soubor definující úlohy pro konfiguraci pomocí ansible.}. Playbook pro konfiguraci serverů je uložen v souboru \verb|ansible/playbook/infra.yaml|.
+Aby bylo možné provozovat Kubenretes na serverech, je nutné uzly nakonfigurovat a nainstalovat potřebné programy pro provoz systému. Konfigurace a instalace potřebných komponent je definovaná pomocí ansible playbooku\footnote{Playbook označuje soubor definující úlohy pro konfiguraci pomocí ansible.}. Playbook pro konfiguraci serverů je uložen v souboru \verb|ansible/playbook/infra.yaml|.
 
 Konfigurace a instalace se skládala z následujících kroků, jdoucích po sobě.
 \begin{enumerate}
@@ -36,122 +36,127 @@ Konfigurace a instalace se skládala z následujících kroků, jdoucích po sob
     \item Instalace Kubernetes
     \item Vytvoření uživatele \textit{kube} pro ovládání Kubernetes
     \item Nastavení parametrů kubelet\label{en:ip_set}
-    \item Nastavení parametru kernelu pro přeposílání ARP dotazu\label{en:arp_forward}
+    \item Nastavení parametru kernelu pro přeposílání ARP komunikace\label{en:arp_forward}
 \end{enumerate}
-Jedná se o standardní instalaci Kubernetes s Containerd poskytující běhové prostředí kontejnerů dle OCI. Předposlední bod z výše uvedených je přidán, aby bylo možné provozovat systém Kubernetes na serverech s více sítovými rozhraními. Poslední krok \ref{en:arp_forward} jesoučástí konfigurace pro případné testování podpory obousměrnosti komunikace. Tato možnost je krátce zmíněna na konci sekce \ref{ukazkaProxy}.
+Jedná se o standardní instalaci Kubernetes s Containerd poskytující běhové prostředí kontejnerů dle OCI. Předposlední bod, z výše uvedených, je přidán, aby bylo možné provozovat systém Kubernetes na serverech s více síťovými rozhraními. Poslední krok je součástí konfigurace pro případné testování podpory obousměrnosti komunikace. Tato možnost je krátce zmíněna na konci sekce \ref{ukazkaProxy}.
 
-\subsection{Konfigurace zařízeních}
-Pro možnost testování je nutné nastavit i virtuálním stroj device01-01 tak, aby provozoval aplikace komunikující za pomocí TCP, UDP a HTTP protokolu. Pro jednoduchost provozování aplikací je použit docker. Konfigurace a instalace Dockeru. Konfigurace a instalace byla provedena pomocí ansible playbooku \verb|ansible/playbook/device.yaml|.
+\subsection{Konfigurace zařízení}
+Pro možnost testování je nutné vhodně nastavit i virtuálním stroj \textit{device01-01} tak, aby provozoval aplikace komunikující za pomocí TCP, UDP a HTTP protokolu. Pro jednoduchost provozování aplikací je použit Docker. Konfigurace a instalace byla provedena pomocí ansible playbooku \verb|ansible/playbook/device.yaml|.
+
 \subsection{Instalace a konfigurace Kubernetes}
-Instalace Kubernetes je prováděna pomocí nástroje \textit{kubeadm}. Kubeadm umožňuje jednoduchou instalaci klastru Kubernetes. Pro konfiguraci instalace klastru lze využít parametry, které kubeadm nabízí. Důležitými parametru pro instalaci klastru jsou \verb|--apiserver-advertise-address| nastavující primární IP adresu API serveru, \verb|--pod-network-cidr| nastavující proměnnou \textit{podCIDR} a \verb|--apiserver-cert-extra-sans| definující parametry pro generování TLS certifikátu.
+Instalace Kubernetes je prováděna pomocí nástroje \textit{kubeadm}. Kubeadm umožňuje jednoduchou instalaci Kubernetes. Pro konfiguraci instalace systému lze využít parametry, které kubeadm nabízí. Důležitými parametry pro instalaci cloudu jsou \verb|--apiserver-advertise-address| nastavující primární IP adresu API serveru, \verb|--pod-network-cidr| nastavující proměnnou \textit{podCIDR} a \verb|--apiserver-cert-extra-sans| definující parametry pro generování TLS certifikátu.
  
-Součástí instalace Kubernetes je instalace samotného CNI, který bude použit pro síťování uvnitř klastru. Pro ukázkové prostředí byl použit modul \textit{flannel}. Jedná se o jednoduchý a často používaný CNI Kubernetes plugin.\footnote{Řešení podporuje i použití jiných CNI pluginy. Funkcionalita byla testována pouze na modulech Flannel a Calico}.
+Součástí instalace Kubernetes je instalace samotného CNI, který bude použit pro síťování uvnitř cloudu. Pro ukázkové prostředí byl použit modul \textit{Flannel}. Jedná se o jednoduchý a často používaný CNI Kubernetes plugin\footnote{Řešení podporuje i použití jiných CNI pluginy. Funkcionalita byla testována pouze na modulech Flannel a Calico}.
 
 \subsection{Výsledné prostředí}
-Výsledné prostředí poskytuje dobré možnosti pro testování a realizaci samotného návrh rozšíření. Následující části textu budou vyvíjeny a prezentovány na prostředí odpovídající instalaci popsané výše. Postup rozběhnutí prostředí přesně odpovídá postupu, který je popsán v přiloženém archivu. 
+Výsledné prostředí poskytuje dobré možnosti pro testování a realizaci samotného návrhu rozšíření. Následující části textu budou vyvíjeny a prezentovány na prostředí odpovídající instalaci popsané výše. Postup rozběhnutí prostředí přesně odpovídá postupu, který je popsán v přiloženém archivu. 
 
-\section{Návrh řešení a implemetace}
-Před implementací samotného řešení je nutné provést samotný návrh tak, aby splňoval již deklarované požadavky. Při návrhu budeme vycházet z probíraného řešení pomocí proxy, které je popsáno v předchozí v sekci \ref{sec:req} v minulé kapitole. Návrhu bude používat již zmíněný a probraný koncept Podu s více síťovými rozhraními. Konfiguraci Podu s více rozhraními bude docíleno za použití implementace standardu \textit{Kubernetes Network Custom Resource Definition De-facto Standard}.
+\section{Návrh řešení a implementace}
+Před implementací řešení je nutné provést návrh tak, aby splňoval již deklarované požadavky. Návrh vychází z probíraného řešení pomocí proxy, které je popsáno v sekci \ref{sec:req} předchozí kapitoly. Návrhu bude používat již zmíněný a probraný koncept Podu s více síťovými rozhraními. Konfigurace Podu s více rozhraními bude docíleno za použití implementace standardu \href{https://github.com/k8snetworkplumbingwg/multi-net-spec}{\textit{Kubernetes Network Custom Resource Definition De-facto Standard}}.
 
-Návrh řešení se bude skládat z dvou hlavních částí. V první části bude diskutován výběr aplikace pro provozování služby proxy. Druhá část bude popisovat konkrétní návrh konfigurace síťování v podu. Na závěr bude provedena ukázka navrženého řešení.
+Návrh řešení se bude skládat z dvou hlavních částí. V první části bude diskutován výběr aplikace pro provozování služby proxy. Druhá část bude popisovat konkrétní návrh konfigurace síťování v Podu. Na závěr bude provedena ukázka navrženého řešení.
 
 \subsection{Vymezení implementace}
-V předešlé kapitole jsou deklarovány požadavky na hledané řešení problému a následné rozšíření funkcionality Kubernetes. Návrh si klade nároky každý z těchto požadavků splnit. Zároveň se snaží o to, aby nepřinášelo žádná výrazná omezení pro případné použití. Veškeré koncepty a myšlenky, které budou dále popsány budou klást důraz na snadnou konfigurovatelnost a případnou rozšiřitelnost.
+V předešlé kapitole jsou deklarovány požadavky na hledané řešení problému a následné rozšíření funkcionality Kubernetes. Návrh si klade nároky splnit každý z těchto požadavků. Zároveň se snaží o to, aby nepřinášelo žádná výrazná omezení pro případné použití. Veškeré koncepty a myšlenky, které budou dále popsány, budou klást důraz na snadnou konfigurovatelnost a případnou rozšiřitelnost.
 
-I přesto tuto snahu dává smysl se omezit na určitý způsob použití výsledného rozšíření. Tato omezení jsou použita zejména pro umožnění automatizace práce formou operátoru. Automatizace bude popsána v sekci \ref{sec:operator} zabývající se rozšířením Kubernets. Pro každé zmíněné omezení bude nabídnuta alternativa, která dané omezení umožňuje realizovat. 
+I přesto tuto snahu dává smysl se omezit na určitý způsob použití výsledného rozšíření. Tato omezení jsou použita zejména pro umožnění automatizace práce formou operátoru. Automatizace bude popsána v sekci \ref{sec:operator}, zabývající se rozšířením Kubernetes.
+
+Pro každé zmíněné omezení bude nabídnuta alternativa, která dané omezení umožňuje realizovat. 
 
 \subsubsection*{Podpora protokolů}
-V požadavcích pro řešení problému je zmíněná podpora TCP, UDP a HTTP protokolu. TCP a UDP protokoly se nachází na stejné abstrakční vrstvě dle ISO/OSI modelu. Protokol HTTP se nachází na vrstvě sedmé, nejvyšší abstrakční vrstvě. Tento protokol se spoléhá na zmíněné protokoly TCP a UDP. Dnes používané verze HTTP (verze v1 a v2) jsou provozovány za pomocí TCP protokolu. Verze v3 protokolu HTTP je stále vyvíjena, dnešní návrh počítá, že protokol bude využívat QUIC protokol, který je postaven na UDP. \cite{fesl_2021_aplikan}.
+V požadavcích pro řešení problému je zmíněná podpora TCP, UDP a HTTP protokolu. TCP a UDP protokoly se nachází na stejné abstrakční vrstvě dle ISO/OSI modelu. Protokol HTTP se nachází na sedmé nejvyšší abstrakční vrstvě. Tento protokol se spoléhá na zmíněné protokoly TCP a UDP. Dnes používané verze HTTP (verze v1 a v2) jsou provozovány za pomocí TCP protokolu. Verze v3 protokolu HTTP je stále vyvíjena. Dnešní návrh počítá, že protokol bude využívat QUIC protokol, který je postaven na UDP. \cite{fesl_2021_aplikan}.
 
-Pro potřeby práce bude navrhované řešení zaměřeno převážně na komunikaci pomocí protokolů TCP a UDP. Toto je možné, jelikož nalezení řešní pro tyto dva protokoly implikuje i podporu HTTP. Přímo podpora protokolu HTTP bude diskutována v sekci níže. Jeho podpora může přinést zajímavé možnosti rozšíření funkcionality. Jeho podpora ale výrazně komplikuje konfiguraci a návrh řešení a pro automatizaci práce není vhodná.
+Pro potřeby práce bude navrhované řešení zaměřeno převážně na komunikací pomocí protokolů TCP a UDP. Toto je možné, jelikož nalezení řešení pro tyto dva protokoly implikuje i podporu HTTP. Přímo podpora protokolu HTTP bude diskutována v sekci níže. Jeho podpora může přinést zajímavé možnosti a rozšířující funkcionality. Podpora HTTP ale výrazně komplikuje konfiguraci a návrh řešení. Pro automatizaci není vhodná.
 
 \subsubsection*{Jednosměrnost komunikace}\label{vymezeni:1smer}
-Již v předchozí kapitola byla zaměřena převážně na jednostrannou komunikaci směrem z interní sítě clastru do sítě privátní. Jednosměrnou komunikaci se myslí pouze směr, kterým je vyslán první packet komunikace. Takto zůstane podporována oboustrannost komunikace pomocí TCP v případě, že komunikace je zahájena z vnitřní sítě klastru. Směr adresace z privátní sítě do sítě klastru je velmi specifický případ užití a proto nebude přímo součástí implementace. Možnost podpory toho směru bude diskutována níže.
+Dalším vymezením je podpora převážně jednosměrné komunikace z interní sítě clusteru do sítě privátní. Jednosměrnou komunikaci se myslí pouze směr, kterým je vyslána první zpráva komunikace. Takto zůstane podporována oboustrannost komunikace pomocí TCP i UDP v případě, že komunikace je zahájena z vnitřní sítě klastru.
+
+Směr adresace z privátní sítě do sítě klastru je velmi specifický případ užití a proto nebude přímo součástí implementace. Možnost podpory toho směru bude diskutována níže.
 
 \subsection{Výběr proxy}
-Aplikaci poskytující službu proxy bude použita pro samotné propojení sítí, proto je její výběr velmi důležitý. Tato služba by měla slňovat následující požadavky: možnost provozování v kontejneru, snadná konfigurovatelnost, možnost provozování více proxy najednou.
+Pro propojení interní sítě Kubernetes a přilehlé privátní sítě bude použita služba proxy. Tato služba by měla splňovat následující požadavky: možnost provozování v kontejneru, snadná konfigurovatelnost a možnost provozování více proxy spojení v jeden okamžik.
 
-Jelikož je služba proxy dlouho známí a často používaný koncept, aplikací poskytující tuto službu je celá řada. Z tohoto důvodu nedává smysl vyvíjet nové vlastní řešení. Namísto toho lze využít již existujících implementací. Mezi známe implementace, které splňují výše deklarované požadavky patří například: HAProxy, Nginx, Envoy, SoCat. Právě SoCat byl vybrán jako vhodná pro provoz služby proxy.
+Aplikací poskytující službu proxy je celá řada. Z tohoto důvodu nedává smysl vyvíjet nové vlastní řešení. Namísto toho lze využít již existujících implementací. Mezi známe implementace, které splňují výše deklarované požadavky patří například: HAProxy, Nginx, Envoy, SoCat. Právě SoCat byl vybrán jako vhodná pro provoz služby proxy.
 
-SoCat je nástroj vyvinutý společností redhead pro přenost dat. Tento nástroj je navržen tak, aby byl velmi jednoduchý a zároveň vysoce konfigurovatelný, což nabízí velké možnosti použití. Jedno z možných použití je i poskytování TCP respektive UDP proxy. \cite{amoany_2020_getting}
+SoCat je nástroj pro přenos dat vyvinutý společností Red Head. Tento nástroj je navržen tak, aby byl jednoduchý a zároveň vysoce konfigurovatelný. To nabízí velké možnosti použití tohoto nástroje. Jedno z možných použití je i poskytování TCP respektive UDP proxy. \cite{amoany_2020_getting}
 
-SoCat je velmi známy a minimalistycký nástroj. Díky tomu je velmi jednoduchý na použití a vhodný na provoz v kontejneru. SoCat je zároveň dostupný, jako veřejný obraz kontejneru na platformě Docke~Hub. Z tohoto je velmi vhodným řešením pro provoz v rámci klastru kubernetes.
+SoCat je velmi známý a minimalistický nástroj. Díky tomu je velmi jednoduchý na použití a vhodný pro provoz v kontejneru. SoCat je zároveň dostupný, jako veřejný obraz kontejneru na platformě Docke~Hub. Z tohoto je vhodným řešením pro provoz v rámci systému Kubernetes.
 
-Další podmínkou pro vhodnou volbu proxy je možnost provozování proxy pro více spojení najednou. Pro tuto funkci nabízí SoCat přepínač fork. Při použití tohoto přepínače program vytvoří pro každé nové spojení nový proces, který bude dané spojení spravovat. Tímto je zajištěna podpora více spojení najednou.
+Další podmínkou pro vhodnou volbu proxy je možnost provozování proxy pro více spojení najednou. Pro tuto funkci nabízí SoCat přepínač \textit{fork}. Při použití tohoto přepínače program vytvoří pro každé nové spojení nový proces, který bude dané spojení spravovat. Tímto je zajištěna podpora více spojení najednou.
 
-Společně s jednoduchou konfigurací tak SoCat splňuje všechny požadavky a je vhodnou volbou pro provozování proxy v prostředí Kubenretes formou kontejneru. Následující část textu již bude předpokládat použití tohoto nástroje. 
+Společně s jednoduchou konfigurací splňuje SoCat všechny požadavky a je vhodnou volbou pro provozování proxy v prostředí Kubenretes formou kontejneru. Následující část textu již bude předpokládat použití tohoto nástroje. 
 
 \bigskip
 
-SoCat přímo neumí pracovat s protokolem HTTP. V případě potřeby práce je možné využít některý z nástrojů, které tuto možnost nabízí. Vhodným kandidátem může být služba Nginx, kterou lze provozovat i jako proxy podporující HTTP. Nginx nabízí možnost proxy na čtvrté a sedmé vrstvě ISO/OSI modelu. Možnost řídit proxy pomocí HTTP protokolu pak nabízí velkou řadu možností pro rozšíření fungování proxy oproti řešením podporujíc pouze čtvrtou vrstvu ISO/OSI. Příkladem může být pokročilý load-balancing, podpora šifrování a kontrola routovaní pomocí HTTP. Pro účely práce nebude tento proxy server použit, z důvodu náročné konfigurace, která se nehodí v implementační části.      
+SoCat přímo neumí pracovat s protokolem HTTP. V případě potřeby práce je možné využít některý z nástrojů, které tuto možnost nabízí. Vhodným kandidátem může být služba Nginx, kterou lze provozovat jako proxy podporující HTTP. Nginx nabízí možnost proxy na čtvrté a sedmé vrstvě ISO/OSI modelu. Možnost řídit proxy pomocí HTTP protokolu pak nabízí velkou řadu možností -- oproti řešením podporujíc pouze čtvrtou vrstvu ISO/OSI. Příkladem může být pokročilý load-balancing, podpora šifrování a kontrola routování pomocí HTTP atd. Pro účely práce nebude tento proxy server použit, z důvodu náročné konfigurace.      
 
 \subsection{Nastavení sítě}\label{sec:multus}
-Důležitou částí návrhu řešení je i nastavení síťování v podu tak, aby podporoval více síťových rozhraní. Způsob, kterým lze tohoto dosáhnout je na teoretické úrovni popsán již v předchozí kapitole. Z tohoto textu bude návrh síťování vycházet. Pro podporu podu více síťových rozhraní v podu bude využit \textit{Kubernetes Network Custom Resource Definition De-facto Standard}.   
+Důležitou částí návrhu řešení je i nastavení síťování v Podu tak, aby podporoval více síťových rozhraní. Způsob, kterým lze tohoto dosáhnout, je na teoretické úrovni popsán již v předchozí kapitole. Z této kapitoly bude návrh síťování vycházet. Pro podporu Podu více síťových rozhraní bude využit \href{https://github.com/k8snetworkplumbingwg/multi-net-spec}{\textit{Kubernetes Network Custom Resource Definition De-facto Standard}}.   
 
-Tento standard deklaruje API rozhraní pro popis přídavných síťových rozhraní v rámci Kubernetes. Zároveň definuje základní podobu takzvaných gelegujících pluginů. Jako delegujícími pluginy jsou ve standardu označovány programy a řešení, které implementují zmíněný standard. Kubernetes Network Custom Resource Definition De-facto Standard odkazuje na část standardu CNI o delegování práce mezi moduly. Zmíněná část je krátce popsána v sekci \ref{cni}  první kapitoly. Právě díky této části je umožněna snadná implementace gelegujících pluginů. Jedním z těchto pluginů, je Multus CNI (Multus). 
+Tento standard deklaruje API rozhraní pro popis přídavných síťových rozhraní v rámci Kubernetes. Zároveň definuje základní podobu tzv. delegujících pluginů. Jako delegujícími pluginy jsou ve standardu označovány programy a řešení, které implementují zmíněný standard. Kubernetes \textit{Network Custom Resource Definition De-facto Standard} odkazuje na část standardu CNI o delegování práce mezi moduly. Zmíněná část je krátce popsána v sekci \ref{cni}  první kapitoly. Právě díky této části je umožněna snadná implementace delegujících pluginů. Jedním z těchto pluginů je Multus CNI (Multus). 
 
 %V kapitole o možných řešení je řešení pomoci proxy uvedeno, jako vyhovující a \textit{nejlepší možné}. Zároveň tato kapitola uvádí, že pro potřeby použití proxy je nutné umožnit tvorbu Podu s více rozhraními - tomuto přesně vyhovuje standart \textit{Kubernetes Network Custom Resource Definition De-facto Standard}.
 
 %Contrail splňuje specifikaci CNI i Kubernetes Network Custom Resource Definition. Tento plugin splňuje potřeby pro řešení problému, jedná se ale o velký pokročilý plugin, který je těžké nastavovat a spravovat. Zároveň jeho použití může omezit některé specifické potřeby archytektur klaudu.
 
-Multus je gelegujících plugin, který je vyvíjen přímo skupinou Network Plumbing Working Group, která spravuje zmíněný standard. Multus není přímo implementace CNI, projekt je označován jako takzvaný meta-plugin. \cite{hayashi_2019_multuscni}
+Multus je delegující plugin, který je vyvíjen přímo skupinou Network Plumbing Working Group, která spravuje zmíněný standard. Multus není přímo implementace CNI specifikace, Multus projekt je označován jako tzv. meta-plugin. \cite{hayashi_2019_multuscni}
 
-Multus byl navržen jako zásuvný modul, který rozšiřuje základní Kubernetes CNI o funkci tvorby podu s více rozhraní. Této možnosti je dosaženo tím, že Multus umožňuje volání více implementací CNI standardu. Při použití to znamená, že Multus volá takzvaný \uv{hlavní} CNI modul (defaultní, pro umožnění komunikace v klastru) a následně \uv{vedlejší} modul, který do Podu vloží a nastaví přídavné rozhraní. Tímto způsobem je umožněno tvořit Pody s více síťovými rozhraními.. \cite{hayashi_2019_multuscni}
+Multus byl navržen jako zásuvný modul, který rozšiřuje základní Kubernetes CNI o funkci tvorby Podu s více rozhraními. Této možnosti je dosaženo tím, že Multus umožňuje volání více implementací CNI standardu. Při použití to znamená, že Multus volá tzv. \uv{hlavní} CNI modul (výchozí, pro umožnění komunikace v cloudu) a následně \uv{vedlejší} modul, který do Podu vkládá a nastavuje přídavné rozhraní. Tímto způsobem je umožněno vytvářet Pody s více síťovými rozhraními. \cite{hayashi_2019_multuscni}
 
-Způsob konfigurace přídavných síťových rozhraní je popsán již ve specifikaci Kubernetes Network Custom Resource Definition De-facto Standard. Více informací o standardu je popsáno v \ref{sec:kncrdds} části této práce.
-
-Právě Multus je použit jako způsob umožnující tvorbu podu s Více rozhraními. Tento plugin byl, jelikož se jedná o velmi elegantní řešení. Poskytuje velkou volnost použití a nijak neomezuje síťování v Kubernetes. Multus je velmi dobrou volbou pro řešení problému.
-
-
+Způsob konfigurace přídavných síťových rozhraní je popsán ve specifikaci Kubernetes \textit{Network Custom Resource Definition De-facto Standard}. Více informací o standardu je popsáno v minulé kapitole sekci \ref{sec:kncrdds}.
 
 %This is accomplished by Multus acting as a \uv{meta-plugin}, a CNI plugin that can call multiple other CNI plugins.\\Dokumentace uvádí termín \uv{hlavní} modul a \uv{delegovaný} modul. Hlavní modul je zodpovědný za síťování uvnitř interní sítě Kubernetes.\\deleguje konfiguraci a přidělení síťových rozhraní na další CNI zásuvné moduly. Tímto způsobem Multus CNI funguje jako takový orchestrátor pro ostatní CNI zásuvné moduly, umožňujíc současnou práci s více různými sítěmi. Toto chování je umožněno především tím, že specifikace CNI možnost delegace práce mezi pluginy. Toto je popsáno zmíněno v první kapitole v sekci popisující standard. Pro zjedudušení by se dalo říct, že při vzniku Podu multus vždy volá \uv{hlavního} CNI a pokud Pod definuje, tak i všechny delegované moduly. Tento způsob umožňuje tvorbu Podů s více síťovími rozhraními. Zároveň se jedná o velmi elegantní řešení, jelikož poskytuje velkou volnost použití a nijak neomezuje standartní síťování. Multus je velmi dobrou volbou pro řešení problému.  Konrétní použití je uvedeno v sekci \ref{prostredi}
 
 \subsection{Ukázka nastavení proxy}\label{ukazkaProxy}
-Pomocí služby SoCat a modulu Multus je již možné vytvořit funkční způsob pro komunikaci se zařízeními v privátních sítích. Pro snadnější pochopení, jakým způsobem je adresace v privátních sítích umožněna bude řešení ukázáno na konkrétním příkladu.
+Pomocí služby SoCat a modulu Multus je již možné vytvořit funkční způsob pro komunikaci se zařízeními v privátních sítích. Pro snadnější pochopení, jakým způsobem je adresace v privátních sítích umožněna, bude řešení ukázáno na konkrétním příkladu.
 
-Následující příklad je nejednodušším případu užití. Cílem příkladu bude zprovoznit službu proxy přímo v systému kubernetes tak, aby poskytla komunikaci mezi interní sítí klastru a jedním zařízením v privátní sítě.
+Cílem příkladu bude zprovoznit službu proxy přímo v systému Kubernetes tak, aby poskytla komunikaci mezi interní sítí klastru a jedním zařízením v privátní síti.
 
-Jako první je potřeba vytvořit objekt Network~Attachment~Definition. Konkrérně se jedná o objekt s názvem \textit{bridge-conf}. Definice tohoto objektu je znázorněna ve výpisu kódu \ref{sample:nad}.
+Jako první je potřeba vytvořit objekt Network~Attachment~Definition. Konkrérně se jedná o objekt s názvem \textit{bridge-conf}. Definice tohoto objektu je znázorněna ve výpisu kódu \ref{sample:nad}. Uvedená specifikace objektu \textit{bridge-conf} odpovídá navrženému API v rámci  \textit{Kubernetes Network Custom Resource Definition De-facto Standard}. Objekt definuje přídavné síťové rozhraní, které bude vytvořeno pomocí CNI modulu \textit{bridge}\footnote{Uvedená konfigurace je pouze ukázková, při používání je důležité objekt nakonfigurovat konkretním potřebám pro konkretní systém. Pro více informací je dobré být plně seznámen s projektem CNI, zejména se specifikací.}.
 
 \input{text/code/sample_nad}
 
-Tento objekt jednoduše popisuje způsob, jakým bude vytvořeno přídavné síťové rozhraní v Podu obsahující proxy (běžící proces SoCat). Popis je obsažen v atributu objektu \verb|.spec.connection|. Tento atribut pak obsahuje kompletní popis a konfiguraci pro použití \uv{vedlejšího} pluginu CNI. Jako vhodným modulem pro ukázku byl zvolen CNI plugin bridge. Jedná se o stejný CNI plugin, který byl popsán v první kapitole této práce \ref{sitovaniKon}.
+Tento objekt popisuje způsob, jakým bude vytvořeno přídavné síťové rozhraní v Podu obsahující proxy (běžící proces SoCat). Popis je obsažen v atributu objektu \verb|.spec.connection|. Tento atribut obsahuje kompletní popis a konfiguraci pro použití \uv{vedlejšího} pluginu CNI. Jako vhodným modulem pro ukázku byl zvolen CNI plugin \textit{bridge}. Jedná se o stejný CNI plugin, který byl popsán v první kapitole této práce \ref{sitovaniKon}.
 
-V tuto chvíli je vytvořen objekt popisující způsob vytvoření přídavného síťové rozhraní. Nyní je třeba vytvořit Pod, který bude provozovat potřebou službu proxy. Definice tohoto podu je znázorněna v ukázce \ref{sample:proxy}.
+V tuto chvíli je vytvořen objekt popisující způsob vytvoření přídavného síťové rozhraní. Nyní je třeba vytvořit Pod, který bude provozovat potřebou službu proxy. Definice tohoto Podu je znázorněna v ukázce \ref{sample:proxy}.
 
 \input{text/code/sample_proxy}
 
-Takto vytvořený pod bude provozovat proxy pomocí nástroje SoCat. Konfigurace SoCat je určena v objektu \verb|spec.containers|. Přídavné síťové rozhraní je deklarováno pomocí atributu \verb|.metadata.annotations.'k8s.v1.cni.cncf.io/networks'|, který odkazuj na již vytvořený Network Attachment Definition objekt. Pro kontrolu konfigurace je uveden výpis \ref{code:proxyValid}
+\newpage
+
+Takto vytvořený Pod bude provozovat proxy pomocí nástroje SoCat. Konfigurace SoCat je určena v objektu \verb|.spec.containers|. Přídavné síťové rozhraní je deklarováno pomocí atributu \verb|.metadata.annotations.'k8s.v1.cni.cncf.io/networks'|, který odkazuje na již vytvořený Network Attachment Definition objekt. Pro kontrolu konfigurace je uveden výpis \ref{code:proxyValid} z vytvořeného Podu.
 
 \input{text/code/code_proxyValid}
 
-V uvedené ukázce lze vidět, že v Podu běží proces SoCat, který provozuje službu proxy. Zároveň je možné vidět, že Pod obsahuje celkem tři síťová rozhraní. Prvním rozhraní je typu \textit{loopback} toto rozhraní je obsaženo v každém podu pro potřeby komunikace v rámci samotného podu. Druhým rozhraním je \verb|eth0@if38| toto rozhraní je vytvořeno CNI modulem flannel a složí pro komunikaci uvnitř klastru. Posledním rozhraním je \verb|net1@if39|. Toto zařízení je vytvořeno díky meta-pluginu Multus. Konkrétně se jedná o  rozhraní vytvořene \uv{vedlejším} modulem bridge, jak je definováno v objektu Network Attachment Definition.
+V uvedené ukázce lze vidět, že v Podu běží proces SoCat, který provozuje službu proxy. Zároveň je možné vidět, že Pod obsahuje celkem tři síťová rozhraní. První rozhraní je typu \textit{loopback} toto rozhraní je obsaženo v každém Podu pro potřeby komunikace v rámci samotného Podu. Druhým rozhraním je \verb|eth0@if38|. Toto rozhraní je vytvořeno CNI modulem \textit{Flannel} a sluoží pro komunikaci uvnitř cloudu. Posledním rozhraním je \verb|net1@if39|. Toto zařízení je vytvořeno díky meta-pluginu Multus. Konkrétně se jedná o  rozhraní vytvořené \uv{vedlejším} modulem \textit{bridge}, jak je definováno v objektu Network Attachment Definition.
 
-Uvedená konfigurace korektně nastavuje proxy tak, aby spojení, které přijdou na otevřený port 8080 daného podu, byly přeposlány dále. V uvedeném případě, na zařízení (s IP adresou \verb|172.17.16.120|) v privátní síti, dostupné z pracovního uzlu - kde pod běží. O správně doručení paketů komunikace se postará již hostující systém Podu. Samotné opuštění interní sítě klastru je umožněno díky přidanému síťovému rozhraní \verb|net1@if39|.
+Uvedená konfigurace korektně nastavuje proxy tak, aby spojení, které přijdou na otevřený port 8080 daného Podu, byla přeposlána dále. V uvedeném případě, na zařízení (s IP adresou \verb|172.17.16.120|) v privátní síti, dostupné z pracovního uzlu, kde Pod běží. O správné doručení paketů komunikace se postará již hostující systém Podu. Samotné opuštění interní sítě klastru je umožněno díky přidanému síťovému rozhraní \verb|net1@if39|.
 
-Uvedený příklad vyžívá CNI pluginu bridge jako\uv{vedlejším} plugin pro nastavení síťování. Takto navržené použití podporuje i libovolné jiné implementace CNI standardu. Díky tomuto, řešení poskytuje úplnou flexibilitu při konfiguraci sítě, jelikož lze použít libovolný CNI plugin.
+Uvedený příklad vyžívá CNI pluginu \textit{bridge} jako \uv{vedlejší} plugin pro nastavení síťování. Takto navržené použití podporuje i libovolné jiné implementace CNI standardu. Díky tomuto řešení poskytuje úplnou flexibilitu při konfiguraci sítě, jelikož lze použít libovolný CNI plugin.
 
 \bigskip
-Tento příklad demonstruje použití nástroje SoCat a meta-pluginu Multus tak, aby umožnila komunikaci objektů v klastru se zařízeními v přilehlé privátní síti. Komunikaci určenou pro zařízení adresovat na takto vytvořený Pod. Pod bude plně abstrahovat komunikaci se zařízením. V reálné případu užití se hodí využít navíc objektu \textit{Service} odkazujíc na daný pod. Tímto lze docílit zpřístupnění standardních funkcí jako je například load-balancing a podpora DNS.
+Tento příklad demonstruje použití nástroje SoCat a meta-pluginu Multus tak, aby umožnil komunikaci objektů v systému Kubernetes se zařízeními v přilehlé privátní síti. Pod bude plně abstrahovat komunikaci se zařízením. V reálném případu užití se hodí využít navíc objektu Service odkazujíc na daný Pod. Tím lze docílit zpřístupnění standardních funkcí jako je například load-balancing a podpora DNS.
 
-Následující a poslední sekce této práce se bude integrací uvedeného řešení do prostředí kubernetes a automatizací konfigurace pro snadnější použití.  
+Následující a poslední sekce této práce se bude zabývat integrací uvedeného řešení do prostředí Kubernetes a automatizací konfigurace pro snadnější použití.  
 
 \subsubsection*{Podpora obousměrnosti komunikace}
-Zmíněná ukázka poskytuje jednosměrné řešení umožnující komunikaci se zařízeními v privátní síti. Adresace směrem do klastru z privátní sítě není podporována. Toto odpovídá omezení zmíněné v sekci o vymezení implementace.
+Zmíněná ukázka poskytuje jednosměrné řešení umožnující komunikaci se zařízeními v privátní síti. Adresace směrem do cloudu z privátní sítě není podporována. To odpovídá omezení zmíněnému v sekci o vymezení implementace.
 
 V případě potřeby adresace do vnitřní sítě klastru se nabízí dvě možnosti. První z nich je použití objektu Ingress. Pomocí Ingress lze dosáhnout možnosti adresace do sítě klastru. Takové řešení je validní, ale přináší nemalé nároky na konfiguraci. Pro podporu více privátních síťových segmentů je použití Ingress neefektivní a pro automatizaci nevhodné.
 
-Druhým způsobem je možnost využití upraveného navrženého řešení. Pro realizaci je možné využít proxy stejným způsobem, jako popsáno výše, jen v opačném směru. Proto aby byla komunikace umožněna musí být vhodně zvolen \uv{vedlejším} CNI plugin. Příklady pluginů, které lze využít jsou host-device a macvlan z množiny referenčních modulu, které jsou vyvíjeny v rámci specifikace CNI. Pro správné použití může být třeba povolit přeposílání ARP paketů na edge uzlech.
+Druhým způsobem je možnost využití upraveného již navrženého řešení. Pro realizaci je možné využít proxy stejným způsobem, jako je popsáno výše, jen v opačném směru. Proto, aby byla komunikace umožněna, musí být vhodně zvolen \uv{vedlejší} CNI plugin. Příklady pluginů, které lze využít jsou \textit{host-device} a \textit{macvlan} z množiny referenčních modulů, které jsou vyvíjeny v rámci specifikace CNI. Pro správné použití může být třeba povolit přeposílání ARP paketů na edge uzlech (záleží na zvoleném \uv{vedlejší} CNI modulu).
 
-V případě implementace podpory obousměrné adresace se nabízí i poskytnout DNS překlad doménových jmen na edge uzlech, pro usnadění adresování. Provozovat takové službu pro objekty interní sítě kubernetes je snadno realizovatelné pomocí CoreDNS s případně upraveným Kubernetes pluginem.  
+V případě implementace podpory obousměrné adresace se nabízí i poskytnout DNS překlad doménových jmen na edge uzlech, pro usnadněni adresování. Provozovat takovou službu pro objekty interní sítě Kubernetes je snadno realizovatelné pomocí CoreDNS, s případně upraveným Kubernetes pluginem.  
 
-\section{Rozšíření Kubernetes}\label{sec:extend}
-Kubernets je velmi dobře navržen proto, aby byl jednoduše rozšiřitelný. Na oficiálních stránkách projektu Kubernets je uvedeno: 
+\section{Rozšiřování Kubernetes}\label{sec:extend}
+Cílem této sekce je rozšířit funkce Kubernetes tak, aby se usnadnilo vytváření spojení mezi interní sítí Kubernetes a zařízeními v privátních přilehlých sítích. Zmíněné rozšíření bude automatizovat kroky uvedené výše. Tato sekce převážně popisuje implementaci operátoru \textit{EdgeOperator}. Zdrojové kódy operátoru jsou součástí přiloženého archivu v adresáři \verb|code/EdgeOperator/|.
+
+Kubernetes je velmi dobře navržen proto, aby byl jednoduše rozšiřitelný. Na oficiálních stránkách projektu Kubernetes je uvedeno: 
 \begin{displayquote}
-\uv{Kubernetes is highly configurable and extensible. As a result, there is rarely a need to fork or submit patches to the Kubernetes project code.}\\(Kubernetes je vysoce konfigurovatelný a rozšiřitelný. Díky tomu je jen zřídka potřeba kód projektu Kubernetes forkovat nebo zasílat záplaty.) \cite{thekubernetesauthors_2022_kubernetes}
+\textit{\uv{Kubernetes is highly configurable and extensible. As a result, there is rarely a need to fork or submit patches to the Kubernetes project code.}} \cite{kubernetestheauthors_2023_extending}\\(Kubernetes je vysoce konfigurovatelný a rozšiřitelný. Díky tomu je jen zřídka potřeba kód projektu Kubernetes forkovat nebo zasílat záplaty.)
 \end{displayquote}
 
-V případě potřeby, Kubernetes nabízí způsoby, kterým lze systém rozšířit. Dokumentace projektu popisuje různé potřeby pro rozšíření systému a zároveň odkazuje na způsoby, jak toho dosáhnout. Pro účely této práce je důležitá sekce popisující rozšiřování Kubernetes API, automatizace práce a rozšíření síťování.\textbf{CITOVAT}
+V případě potřeby, Kubernetes nabízí způsoby, kterým lze systém rozšířit. Dokumentace projektu popisuje různé potřeby pro rozšíření systému a zároveň odkazuje na způsoby, jak toho dosáhnout. Pro tvorbu operátoru je důležitá sekce popisující rozšiřování Kubernetes API a automatizace práce.
 
 %\subsection{Rozšíření síťování - CNI}
 %Pro potřeby rozšíření síťování Kubernetes doporučuje tvorbu vlastního CNI modulu dle CNI specifikace. Tento způsob dává dobrý smysl. Tvorbou vlastního CNI modulu lze plně kontrolovat síťování v Kuberneets. To přináší velkou svobodu a možnost přizpůsobení konkrétním potřebám.
@@ -161,129 +166,158 @@ V případě potřeby, Kubernetes nabízí způsoby, kterým lze systém rozší
 %\subsubsection{Zvolení potřebného delegujícího CNI pluginu}\label{sub:multus}
 
 
-\subsection{Rozšiřování Kubernetes API - CRD}\label{CRD}
-Velká část systému Kubernetes se skládá z definic objektů. Kubernetes objekty jsou prvky, které uchovávají stav klastru, lze si je představit jako datové struktury nesoucí informace. Tyto objekty slouží i pro komunikaci s Kubernetes API serverem. API server poskytuje základní CRUD operace k těmto objektům, díky těmto operacím lze konfigurovat, nastavovat a ovládat samotný klaud.
+\subsection{Rozšiřování Kubernetes API}\label{CRD}
+Kubernetes objekty jsou prvky, které uchovávají stav systému. Lze si je představit jako datové struktury nesoucí informace. Tyto objekty slouží pro komunikaci s Kubernetes API serverem. API server poskytuje základní CRUD operace k těmto objektům a díky těmto operacím lze konfigurovat, nastavovat a ovládat samotný cloud.
 
-Kubernetes poskytuje základní objekty pro práci s klastrem. Příklady těchto objektů jsou Pod, Deployment, Endpoint, Namespace... Tyto objekty jsou navrženy a spravovány autory Kubernetes. Jedním ze standartích objektů je i CustomResourceDefinition. CustomResourceDefinition (zkráceně CRD) je meta-objekt, který umožňuje definovat vlastní nové objekty. CRD pak umožňuje definovat strukturu nových objektů (datových struktur). Příkladem použití CRD je již zmíněný Network Attachment Definition, který byl definovaný v dokumentu Kubernetes Network Custom Resource Definition De-facto Standard. V případě, že je nový CRD objekt vytvořen, je tento objekt přidán do Kubernetes API a tím je možné s ním Kubernetes pracovat. Pro nový datový objekt jsou automaticky vytvořeny základní CRUD operace.
+Kubernetes poskytuje základní objekty pro práci s cloudem. Příklady těchto objektů jsou Pod, Deployment, Endpoint, Namespace atd. Tyto objekty jsou navrženy a spravovány autory Kubernetes. Jedním ze standardních objektů je i CustomResourceDefinition. CustomResourceDefinition (zkráceně CRD) je meta-objekt, který umožňuje definovat vlastní nové objekty. CRD pak umožňuje definovat strukturu nových objektů (datových struktur). Příkladem použití CRD je již zmíněný Network Attachment Definition, který byl definovaný v dokumentu Kubernetes \href{https://github.com/k8snetworkplumbingwg/multi-net-spec}{Network Custom Resource Definition De-facto Standard}. V případě, že je nový CRD objekt vytvořen, je tento objekt přidán do Kubernetes API a tím je možné s ním Kubernetes pracovat. Pro nový datový objekt jsou automaticky vytvořeny základní CRUD operace.
 
-CustomResourceDefinition poskytuje velmi elegantní způsob a jakým lze rozšiřovat Kubernetes API o nové objekty.  
+CustomResourceDefinition poskytuje elegantní způsob pro rozšiřování Kubernetes API.
+
 \subsubsection{Návrh vlastních CRD objektů}\label{CRDDEF}
-Jedním z požadavků zmíněných v sekci \ref{sec:pozadavky} je Jednoduchost. Pro jednoduchost je požadováno, aby řešení podporovalo zavedené způsoby komunikace s klastrem. Toho lze velmi dobře dosáhnout právě za použití CRD. Navržením nových objektů rozšíří standartní API Kubernetes dobře rozšířit API Kubernetes. S nově vzniklými objekty lze následně pracovat pomocí operátorů (popáno v další sekci). Tento způsob zároveň přináší řadu výhod a usnadnění. Jelikož se o správu objektů stará přímo Kubernetes, můžeme se spolehnout na persistenci dat, která vychází z vlastností databáze etcd, tato databáze bude řešit i kolize, které mohou vzniknout při souběžném přístupu k datům. Další výhoud je, že tyto objekty budou dokumentovány standartním způsobem kuebrneets. O jejich validaci se z velké části bude starat Kubernetes API server. Jelikož tento způsob nabízí celou řadu výhod a zároveň splňuje požadavek pro jednoduchost, je vhodným pro účely řešení problému.
+Jedním z požadavků pro řešení problému zmíněných v sekci \ref{sec:pozadavky} je jednoduchost při používání. Pro jednoduchost je požadováno, aby řešení podporovalo zavedené způsoby komunikace s cloudem. Toho lze dosáhnout právě za použití CRD, pro rozšíření standardního Kubernetes API.
 
-Nyní se zaměříme pouze na návrh CRD objektů pro účely řešení problému. Tyto objekty budou tvořit kompletní API pro ovládání tvořeného rozšíření Kubernetes.
+Pomocí CRD objektů je možné udržet standardní API pro uživatele. Tento způsob přináší řadu výhod a usnadnění. I přesto, že tato komunikace (s operátorem) se může stát nestandardní, a z počátku složitá, jedná se o zavedený způsob, který je v oblasti administrace  populární. V oblasti DevOps lze hovořit o zavedeném standardu. 
 
-Navrhované API bude obsahovat tři CRD objkty. Prvním objektem bude \textit{Network Attachment Definition}. \textit{Network Attachment Definition} je deinován v standardu \textit{Kubernetes Network Custom Resource Definition De-
-facto Standard} popsaném v sekci \ref{sec:kncrdds}. Pro více informací o tomto objektu doporučuji si přečíst samotnous specifikaci. Dálšími dvěma objety budou Device a Connection. Oba objekty jsou součástí API skupiny \textit{edge-operator.k8s.dvojak.cz}.  
+Následující podkapitoly uvedou návrh CRD objektů pro výsledný operátor. Samotná implementace operátoru uvedena v poslední části této kapitoly \ref{oper}.  
+
 \subsubsection*{Device}
-Prvním z objektu rozšiřující standartní API je \textit{device}. Objekt device reprezentuje zařízení, která se nachází v privátní síti, mimo klastr. Toto zařízení by mělo být dostupné přes jeden či více z uzlů v clusteru, tyto uzly pak souží jako brány k zařízení. Ve schémau \ref{fig:schema} z přechozí kapitoly by zařízení byly použity pro uchování informací o \textit{device01-01} a \textit{device01-02}. Objekt složí primárně pro ukládání informací o zařízeních. Ve výpisu kódu \ref{sample:device} lze vidět ukázkovou definici objktu.
+Prvním z objektů rozšiřujících standardní API je \textit{Device}. Objekty \textit{Device} reprezentují zařízení, která se nachází v privátní síti, mimo cloudu. Tato zařízení by měla být dostupná přes jeden či více uzlů v klastru. Tyto uzly souží jako brány k zařízení. Objekty slouží primárně pro ukládání informací o zařízeních. Ve výpisu kódu \ref{sample:device} lze vidět ukázkovou definici navrženého objektu.
+
 \input{text/code/sample_device}
+
+Objekt \textit{Device} uchovává data formou -- klíč, hodnota. Data jsou serializována pomocí YAML souborů. Níže jsou vypsány jednotlivé klíče, spolu s vysvětleným významem hodnot v nich uložených.
+
 \begin{description}
-    \item \verb|.spec.nodeName| --- Název pracovního uzlu, který je připojen do privátní sítě a sítě Kuberetes. Tento uzel bude použit pro vytvoření mostu a provozování proxy.
+    \item \verb|.spec.nodeName| --- Název pracovního uzlu, který je připojen do privátní sítě a sítě Kubernetes. Tento uzel bude použit pro vytvoření mostu a provozování proxy.
     \item \verb|.spec.up| --- Definuje, zda je dané zařízení zapnuté a může být použito.
     \item \verb|.spec.ipAddress| --- IP adresa zařízení v privátní síti.
     \item \verb|.spec.components| --- Seznam komponent, které na zařízení běží a jsou dostupné po síti. Komponenta označuje běžící aplikaci. Příkladem takové komponenty může být webový server či jiná aplikace.  
     \item \verb|.spec.components.name| --- Název komponenty pro identifikaci.
-    \item \verb|.spec.components.up| --- Určuje, zda je daná komponenta zapnuté a může být použita.
+    \item \verb|.spec.components.up| --- Určuje, zda je daná komponenta zapnuta a může být použita.
     \item \verb|.spec.components.handlers| --- Seznam portů, které daná aplikace obsahuje.
     \item \verb|.spec.components.handlers.name| --- Název portu. Tento parametr nemá přímé použití, slouží pouze pro dokumentační účely. 
-    \item \verb|.spec.components.handlers.protocol| --- Protokol značuje typ použitého protokolu, povolené hodnoty jsou TCP, UDP a HTTP
+    \item \verb|.spec.components.handlers.protocol| --- Protokol označuje typ použitého protokolu, povolené hodnoty jsou TCP, UDP a HTTP
     \item \verb|.spec.components.handlers.port| --- Číslo daného portu
     \item \verb|.spec.components.handlers.endpoints| --- Seznam koncových bodů (endpointů). Tento seznam je nepovinný a slouží pouze pro dokumentační účely.
 \end{description}
 
-Od této chvíle budeme zařízení v privání síti značit jako \textit{Device}.
+Objekt \textit{Device} je součástí API skupiny \textit{edge-operator.k8s.dvojak.cz}. Zároveň je navržen jako globální a tudíž nepodléhá žádnému Kubernetes namespace.
+
+\bigskip
+
+Od této chvíle budeme zařízení v privátní síti značit jako \textit{Device}.
 
 \subsubsection*{Connection}
-Druhým deinovaným CRD objektem je \textit{Connection}. \textit{Connection} reprezentuje již vytvořené spojení se zařízením v privátní síti \textit{Device}. Objekt složí primárně pro uchovávání informací o spojení a zároveň k ovládání daného rozšíření. Infomace o ovládání bude popsána v sekci \ref{sec:operator} o operátoru. Struktura objektu je nastíněna v ukázce kódu \ref{sample:connection}.
-
-
-Connection represents a connection between a device and Kubernetes cluster. By creating a connection, Service will be created for abstracting device connection. By sending data to that Service, data will be sent to device.
+Druhým definovaným CRD objektem je \textit{Connection}. \textit{Connection} reprezentuje již vytvořené spojení se zařízením v privátní síti \textit{Device}. Objekt slouží pro uchovávání informací o spojení a zároveň k ovládání daného rozšíření. Struktura objektu je nastíněna v ukázce kódu \ref{sample:connection}.
 
 \input{text/code/sample_connection}
+
+Níže jsou vypsány jednotlivé klíče, spolu s vysvětleným významem hodnot v nich uložených.
+
 \begin{description}
-    \item \verb|.spec.deviceName| --- Název objektu \textit{device}, ke ketrému bude vytvořeno spojení proxy. 
-    \item \verb|.spec.networkName| --- Návez \textit{NetworkAttachmentDefinition}. Tento objekt definuje nasatveeí sítě v Podu, které bude použito pro Pod s proxy.
-    \item \verb|.spec.componentNames| --- Seznam komponent objektu \textit{device}, ke ketrému bude vytvořeno spojení proxy. 
+    \item \verb|.spec.deviceName| --- Název objektu \textit{Device}, ke kterému bude vytvořeno spojení proxy. 
+    \item \verb|.spec.networkName| --- Názez objektu \textit{NetworkAttachmentDefinition}. Tento objekt definuje nastavení sítě v Podu, které bude použito pro Pod s proxy.
+    \item \verb|.spec.componentNames| --- Seznam komponent objektu \textit{Device}, ke kterému bude vytvořeno spojení proxy. 
 \end{description}
 
-\subsection{Automatizace práce - Operátor}\label{sec:operator}
-Objekty slouží jako datové struktury pro ukládaní informací o stavu klatru. Tyto objekty jsou zpracovávány pomocí Kubernetes kontrolerů. Kontrolery jsou nekonečné smyčky, které mají za úkol udržovat klastr v požadovaném stavu, který je definovaný pomoc9 objektů uložených v \textit{etcd} databázi. Kontrolery lze chápat jako pracovníky, kteří spravují celý systém Kubernetes. Oficiální dokumentace uvádí příklad na termostatu. Termostat je typicky nastaven na fixní požadovanou teplotu, kterou má za úkol v místnosti udržet. V případě, že teplota klesne Pod požadovanou hladinu, pak provede potřebné kroky pro zvýšení teploty v místnosti na požadovanou teplotu. Stejným způsobem fungují kontrolery v systému Kuberneets. Neustále porovnávají aktuální stav klastru se stavem požadovaným (definovaným objekty). V případě že se tyto dva stavy liší, pak se pokusí aktuální stav klastru co nejvíce přiblížit stavu požadovanému. Tyto kontrolery jsou najčastěji provozovány formou malých aplikací.
+Vytvořením objektu \textit{Connection} se vytvoří již samotné spojení mezi interní sítí Kubernetes a daným zařízením. Postup vytvoření takového spojení je vysvětlen v sekci \ref{oper}.
 
-Funkce kontroleru je pěkně ilustrována na následujícím příkladu zdrojového kódu. \cite{nguyen_2017_a}
+\bigskip
+
+Objekt \textit{Connection} je součástí API skupiny \textit{edge-operator.k8s.dvojak.cz}. Tento objekt je Kubernetes namespace závislý.
+
+\subsection{Automatizace práce}\label{sec:operator}
+Objekty slouží jako datové struktury pro ukládaní informací o stavu systému. Tyto objekty jsou zpracovávány pomocí Kubernetes kontrolerů. Kontrolery jsou nekonečné smyčky, které mají za úkol udržovat systém v požadovaném stavu, který je definovaný pomocí objektů uložených v \textit{etcd} databázi. Kontrolery lze chápat jako pracovníky, kteří spravují celý systém Kubernetes. Oficiální dokumentace uvádí příklad na termostatu. Termostat je typicky nastaven na fixní požadovanou teplotu, kterou má za úkol v místnosti udržet. V případě, že teplota klesne Pod požadovanou hodnotu, pak provede potřebné kroky pro zvýšení teploty v místnosti.
+
+Stejným způsobem fungují kontrolery v systému Kubernetes. Neustále porovnávají aktuální stav cloudu Kubernetes se stavem požadovaným (definovaným objekty). V případě že se tyto dva stavy liší, pak se pokusí aktuální stav cloudu co nejvíce přiblížit stavu požadovanému.
+
+Funkce kontroleru je názorně ilustrována na následujícím příkladu zdrojového kódu \ref{sample:controller}. \cite{nguyen_2017_a}
 \input{text/code/sample_controller}
 
-Stejně jako Kubernetes nabízí základní skupinu standardních objektů, tak nabízí i standardní množinu kontrolerů. Tyto kontrolery jsou spravovány vývojáři Kubernetes a jsou součástí základní instalace systému. Příkladem těchto kontrolerů jsou Deployment Controller, Endpoint Controller, Namespace controler\ldots Zmíněný výčet je velmi podobný výčtu objektů v předchozí kapitole. Je tomu tak, jelikož zmíněné kontrolery implementují logiku pro práci právě s danými objekty. Kontrolery společně s objekty tvoří základní stavební bloky Kubernetes, které představují způsob, jakým je Kubernetes navržen. Tento koncept lze přirovnat k návrhovému vzoru, který usnadňuje správu a škálování aplikací v kontejnerech prostřednictvím abstrakce a deklarativního přístupu. Tento způsob zároveň umožňuje snadnou rozšiřitelnost.
+Stejně jako Kubernetes obsahuje základní skupinu standardních objektů, tak nabízí i standardní množinu kontrolerů. Tyto kontrolery jsou spravovány vývojáři Kubernetes a jsou součástí základní instalace systému. Příkladem těchto kontrolerů jsou Deployment Controller, Endpoint Controller, Namespace controler atd. 
 
-V předchozí částí byl zmíněn způsob rozšiřování Kuberneets API pomocí CRD. Právě s CRD úzce souvisí návrhovým vzor operátor. Operátor je návrhový vzor definovaný Kubernetes, který umožňuje vytvářet moduly podobné kontrolerům. 
-\subsubsection{Návrhový zvor Operátor}
-Operátor je aplikace, která rozšiřuje funkcionalitu Kubernetes o specifické vlastnosti. Velmi často pracuje s Custom Resource Definitions (CRD). Operátor navazuje na principy kontrolerů v Kubernetes a zavádí možnst automatizace pro správu aplikací v prostředí Kubernetes. Hlavní myšlenkou operátoru je umožnit automatizace práce administrátorům aplikací. Operátor lze označit jako modul, který přidává velmi specifické funcionality do systému Kubernetes. 
+Kontrolery společně s objekty tvoří základní stavební bloky Kubernetes, které představují způsob, jakým je Kubernetes navržen. Tento koncept (návrhový vzor) usnadňuje správu a škálování aplikací. Zároveň umožňuje snadnou rozšiřitelnost systému.
 
-Nejčastěji je operátor tvořen kombinací CRD a kontroleru, který zpracovává a spravuje instance těchto objektů. Vetšina operátorů implementuje respektivě navrhuje jedno či více rozhraními, které Kuberneets nabízí. Těmito rozhraními jsou:  
+V předchozí částí byl zmíněn způsob rozšiřování Kubernetes API pomocí CRD. Právě s CRD úzce souvisí návrhový vzor operátor. Operátor je návrhový vzor definovaný Kubernetes, který (společně s CRD) umožňuje vytvářet moduly podobné kontrolerům. 
+\subsubsection{Operátor}
+Operátor je aplikace, která rozšiřuje funkcionalitu Kubernetes o specifické vlastnosti. Velmi často pracuje s Custom Resource Definitions (CRD). Operátor navazuje na principy kontrolerů v Kubernetes a zavádí možnost automatizace pro správu aplikací v prostředí cloudu. Hlavní myšlenkou operátoru je umožnit automatizace práce administrátorům aplikací. Operátor lze označit jako modul, který přidává velmi specifické funcionality do systému Kubernetes. 
+
+Operátor Kubernetes je obvykle složen z kombinace CRD (Custom Resource Definitions) a kontroleru, který spravuje a zpracovává instance těchto objektů. Většina operátorů implementuje nebo navrhuje jedno nebo více rozhraní, které Kubernetes poskytuje. Tato rozhraní zahrnují:
+  
 \begin{itemize}
     \item Custom Resource Definitions (CRD)\\
-    Objekty umožňující uchování dat o klastru a komunikaci s operátor pomocí Kubernetes API
+    Objekty umožňující ukládání dat o cloudu a komunikaci s operátorem prostřednictvím Kubernetes API.
     \item Kontroller\\
-    Při implementaci kontroleru (nekonečné smyčky) je implementace často abstrahována do implmentací třech základních funkcí.
+    Při implementaci kontroleru je implementace často abstrahována do tří základních funkcí:
     \begin{itemize}
         \item Reconcile\\
-        Reconcile je funkce, která udržuje stav klatv klastru dle pořadované funkcionality, kterou operátor implementuje. Tato funckc je volána, při vzniku pozorovaného CRD, pozorovaný CRD byl změnen, nebo byl vytvořen požadavek na spustění této funkce. 
+        Udržuje cloud v požadovaném stavu a je volána při vzniku nebo změně definice pozorovaného CRD.
         \item Status Modified\\
-        Status Modified je funkce implementující, logiku, která je přováděna ve chvíli změny vnitřního stavu objektu. Funkce je volána při změně vnitřího stavu pozorovaného CRD objektu.
+        Reaguje na změnu vnitřního stavu objektu a je volána při změně stavu pozorovaného CRD.
         \item Deleted\\
-        Posledním funkcí abstrahující kontroller je funkce deleted. Funkce je použita pokaždé, kdž je pozorovaný CRD objekt změněn.
+        Je volána pokaždé, když je pozorovaný CRD objekt smazán.
     \end{itemize}
     \item Finalizers\\
-    Finalizers velmi úzce souvisí s implementací kontrolerů. Jedná se o logiku, která umožňuje dokončit a začistit prováděné operace. Finalizer je typicky volán, při neočekávané chybě systému a ihned po smazání objektu. Jedná se o způsob, kterým lze udržovat nastavení kalstru v co nejvíce konzistentím stavu.
+    Souvisí s implementací kontrolerů a umožňuje dokončit a uklidit prováděné operace. Finalizer je typicky volán při neočekávané chybě systému nebo po smazání objektu.
     \item Webhooks\\
-    Webhooks je zp;sob, kter7m je možné se napjit na slogiku stávajícího API server a uvlivnit tak spracování dat při používíní API serveru. Kubernetes umožňuje implementovat dva zaákladní typy.
+    Umožňuje napojení na inplementaci stávajícího API serveru a ovlivnění zpracování dat při použití API serveru. Kubernetes nabízí dva základní typy:
     \begin{itemize}
         \item Mutator\\
-        Mutator je prvním způsobem, jak ovlivnit fungování API serveru. Mutator umožňuje modifikovat požadavek na API server. Toto umožňuje aplikovat různé polityky na systém, případně opravid nekonzistence dat. V prostředí kubenretes se jedná o velmi mocný nástroj, jak ovlivnit chovhání uživatelů.  
+        Umožňuje modifikovat požadavek na API server, aplikovat různé politiky nebo opravit nekonzistence dat.
         \item Validator\\
-        Validator je druý způsob, jak lze v prostředí kubenetes ovlivnit příjmání pořžadavku. Tento webhook umožňuje validovat příchozí požadadavky. V případě, že data neodpovídají předem stanoveným pravidlům nebo očekávaným hodnotám, je možné tímto webhookem odmítnout daný požadavek.
+        Umožňuje validovat příchozí požadavky a odmítnout ty, které neodpovídají předem stanoveným pravidlům nebo očekávaným hodnotám.
     \end{itemize}
 \end{itemize}
-Návrhový vzor operátor je velmi pěkně navrhnut a rozmyšlen, pro detailnějsí pochopení vzoru doporučuji blog \href{https://iximiuz.com/en/posts/kubernetes-operator-pattern/}{\textit{Exploring Kubernetes Operator Pattern}}, oficiální dokunetaci Kubernetes a předášku \href{https://youtu.be/KBTXBUVNF2I}{\textit{Tutorial: Zero to Operator in 90 Minutes!}} od \textit{Solly Ross}
+Pro detailnější pochopení návrhového vzoru doporučuji blog \href{https://iximiuz.com/en/posts/kubernetes-operator-pattern/}{\textit{Exploring Kubernetes Operator Pattern}}, oficiální dokumentaci Kubernetes a přednášku \href{https://youtu.be/KBTXBUVNF2I}{\textit{Tutorial: Zero to Operator in 90 Minutes!}} od \textit{Solly Ross}
  \cite{bhler_2021_kubeops},
  \cite{kaplan_2022_argocd},
  \cite{velichko_2021_exploring},
  \cite{cncfcloudnativecomputingfoundation_2020_tutorial}
 
-\subsubsection{Oprátor edge-operatrot}
-Poslední částí implementace je realizace operátoru, který bude pracovat s výše vydefinovanými CRD a automatizovat tvorbu proxy Podu, jak je ukázáno v sekci \ref{ukazkaProxy}. Od této chvíle bude tento operátor označován jako edge-operator.
+\subsubsection{Oprátor EdgeOperator}\label{oper}
+Poslední částí implementace je realizace samotného operátoru, který bude pracovat s výše vydefinovanými CRD a automatizovat tvorbu proxy Podu, jak je ukázáno v sekci \ref{ukazkaProxy}. Od této chvíle bude tento operátor označován jako \textit{EdgeOperator}.
 
-Oficiální dokumentace Kubernetes vybízí k použiti některé z frameworků pro implementaci operátorů. frameworků pro realizaci operátoru je celá řada, Kubernetes na svých stránkách uvádí tyto příklady: \textit{kubebuilder} (GO), \textit{KubeOps} (.NET), \textit{kube-rs} (Rust) a \textit{Java Operator SDK}. Pro implementaci operátoru edge-operatrot byl použit \uv{KubeOps - The dotnet Kubernetes Operator SDK}.\footnote{https://github.com/buehler/dotnet-operator-sdk}
+Oficiální dokumentace Kubernetes vybízí k použiti některé z frameworků pro implementaci operátorů. Frameworků pro realizaci operátoru je celá řada. Kubernetes na svých stránkách uvádí tyto příklady: \textit{kubebuilder (GO)}, \textit{KubeOps (.NET)}, \textit{kube-rs (Rust)} a \textit{Java Operator SDK}. Pro implementaci operátoru \textit{EdgeOperator} byl použit \textit{KubeOps - The dotnet Kubernetes Operator SDK}. \cite{bhler_2023_kubeops}
 
-KubeOps je framework obsahující sadu nástrojů pro implementaci operátoru v prostředí .NET. Jedná se o udržovaný projekt, který je stále vyvíjen. Jeho autor udává, že projekt je silně inspirován projektem kubebuilder. KubeOps je implementován v nejnovější verzi freamworku s dlouhodobou podporou \verb|.NET 7|. Implementace KubeOps hojně využívá technologii \verb|APS.NET|, která slouží pro vývoj webových služeb. Použití zmíněné technologie pro tvorbu webu jako základ pro realizaci operátorů dává velký smysl, jelikož právě \verb|APS.NET| je dle průzkumu \textit{Stack Overflow Developer Survey 2022} nejpoužívanější technologií pro vývoj webových backendových aplikací profesionálním vývojáři. \footnote{https://survey.stackoverflow.co/2022/\#most-popular-technologies-webframe-prof} Toto velmi zpřístupňuje možnost implementace operátorů.
+\textit{KubeOps} je framework obsahující sadu nástrojů pro implementaci operátoru v prostředí .NET. Jedná se o udržovaný projekt, který je stále vyvíjen. Jeho autor udává, že projekt je silně inspirován projektem \textit{Kubebuilder}. \cite{bhler_2023_kubeops} \textit{KubeOps} je implementován v nejnovější verzi frameworku s dlouhodobou podporou (\verb|.NET 7|). Implementace \textit{KubeOps} využívá technologii \verb|ASP.NET|, která slouží pro vývoj webových služeb. Použití zmíněné technologie pro tvorbu webu jako základ pro realizaci operátorů dává smysl. Právě \verb|ASP.NET| je dle průzkumu \textit{Stack Overflow Developer Survey 2022} nejpoužívanější technologií pro vývoj webových backendových aplikací profesionálními vývojáři. \cite{stackoverflow_2023_2022} Toto velmi zpřístupňuje možnost implementace operátorů.
 
-V následujících sekcích bude krátce vysvětlen mechanizmus fungování operátoru edge-operator a stručně nastíněn způsob, kterým byl operátor implementován pomocí KubeOps freamworku.
+V následujících sekcích bude krátce vysvětlen mechanizmus fungování operátoru E\textit{dge-operator} a nastíněn způsob, kterým byl operátor implementován pomocí \textit{KubeOps} frameworku. 
 
 \subsubsection*{CRD}
-První s čím se uživatel operátoru setká jsou CRD Device a Connection. Jedná se o objekty, které definovány v sekci \ref{CRDDEF}. Tyto objekty jsou v operátoru definovaný pomocí tříd, které korespondují navrženému API. Mimo standardní datové typy a kontrukce, které nabízí jazyk \verb|C#|, jsou k definici použity i atributy (anotace), které nabízí freamwork KubeOps. Tyto atributy slouží převážně k dodefinování metadat o objektu, jako je dokumentace a podoba specifikace výseledných CRD.
+Objekty, které \textit{EdgeOperator} implementuje jsou \textit{Device} a \textit{Connection}. Jedná se o objekty, které jsou definovány a popsány v sekci \ref{CRDDEF}. Tyto objekty jsou v operátoru definované pomocí tříd, které korespondují navrženému API. Mimo standardní datové typy a konstrukce, které nabízí jazyk \verb|C#|, jsou k definici použity i atributy (anotace), které nabízí framework \textit{KubeOps}. Tyto atributy slouží převážně k dodatečnému definování metadat o objektu, jako je dokumentace a podoba specifikace výsledných CRD.
 
-Objekty jsou definovány pomocí tříd \verb|DeviceEntity| a \verb|ConnectionEntity|, které dědí příslušné třídy z KubeOps.
+Objekty jsou definovány pomocí tříd \verb|DeviceEntity| a \verb|ConnectionEntity|, které dědí příslušné třídy z \textit{KubeOps}.
 
 \subsubsection*{Validátor}
-Edge-operator implementuje validátor pro každý ze zmíněných objektů. Oba tyto validátory slouží pro kontrolu správnosti definic objektů. Tato kontrola probíhá vždy, když je jeden z objektů vytvořen, nebo modifikován. Kontrolované vlastnosti objektů jsou detailně popsány v dokumentaci projektu. 
+\textit{EdgeOperator} implementuje validátor pro každý ze zmíněných objektů. Oba tyto validátory slouží pro kontrolu správnosti definic objektů. Tato kontrola probíhá vždy, když je jeden z objektů vytvořen, nebo modifikován. Kontrolované vlastnosti jsou detailně popsány v dokumentaci projektu. 
 
-Ve výchozím nastavení, operátor zamítne požadavek pro vytvoření respektive editaci objektu v případě, že objekt nesplní jednu z kontrolovaných vlastností. V případě potřeby je možné operátor přepnout do ne-striktního módu validace. V takovém případě, kdy je porušena některá z požadovaných vlastností objektu, operátor pouze informuje o jaká porušení se jedná a požadavek nezamítne. Po provedení požadavku jsou data propsána do interní Kubernetes databáze etcd. Tento mód není určen pro reálné nasazení, jelikož může docházet k nedefinovanému chování. To vede k nekonzistenci stavu klaudu, tyto nekonzistence můžou vyžadovat přímí zásah administrátora do vnitří logyky fungování operátoru.
+Ve výchozím nastavení, operátor zamítne požadavek pro vytvoření respektive editaci objektu v případě, že objekt nesplní jednu z kontrolovaných vlastností. V případě potřeby je možné operátor přepnout do nestriktního módu validace. V této situaci, kdy je porušena některá z požadovaných vlastností objektu, operátor pouze informuje o jaká porušení se jedná a požadavek nezamítne. Po provedení požadavku jsou data propsána do interní Kubernetes databáze \textit{etcd}. Tento mód není určen pro reálné nasazení, jelikož může docházet k nedefinovanému chování. To vede k nekonzistenci stavu cloudu. Tyto nekonzistence mohou vyžadovat přímý zásah administrátora do vnitřní logiky fungování operátoru.
 
-Validátory jsou realizovány pomocí tříd \verb|DeviceEntityValidator| a\\\verb|ConnectionEntityValidator|. Tyto třídy implementují rozhraní dodávaná KubeOps. Realizace validátorů je umožněna díky takvaných webhooks, která Kubernetes poskytuje. V zásadě se jedná o callback, který je volán komponentou kube-api. 
+Validátory jsou realizovány pomocí tříd \verb|DeviceEntityValidator| a\\\verb|ConnectionEntityValidator|. Tyto třídy implementují rozhraní dodávaná \textit{KubeOps}. Realizace validátorů je umožněna díky webhooks, která Kubernetes poskytuje.
+
+Implementace (formou pseudokódu) obou validátoru je uvedena ve výpisech kódu \ref{pseudo:deviceValidation} a \ref{pseudo:connectionValidation}.
+\input{text/code/pseudoDeviceValidation}
+\input{text/code/pseudoConnectionValidation}
 
 \subsubsection*{Kontroler}
-Hlavní částí edge-operator kontroler objektu \textit{Connection}. Implementace tohoto kontroleru automatizuje vytváření služeb proxy, která umožňují samotnou komunikaci. Jedná se o automatizaci kroků, které jsou uvedeny v sekci \ref{ukazkaProxy} této kapitoly.
+Hlavní částí \textit{EdgeOperator} je kontroler objektu \textit{Connection}. Implementace tohoto kontroleru automatizuje vytváření služeb proxy, které umožňují samotnou komunikaci. Jedná se o automatizaci kroků, které jsou uvedeny v sekci \ref{ukazkaProxy} této kapitoly.
 
-Samotný kontroller implementuje metoody Reconcile a Delete kontrolleru. Tyto metody se spoléhají na korektní definicy CRD objektů, pro správné fungování je vyžadováno, aby databáze etcd obsahovala objekty, které jsou validní dle výše popsaného validátoru.
+Samotný kontroler implementuje metody Reconcile a Delete kontroleru. Tyto metody se spoléhají na korektní definici CRD objektů. Pro správné fungování je vyžadováno, aby databáze \textit{etcd} obsahovala objekty, které jsou validní dle výše popsaného validátoru.
 
-Reconcile metoda implementuje logiku pro vytváření nový spojení a udržování již existujících spojení (Connection). Při vzniku nového spojení (vytvoření objektu Connection) metoda vytvoří obejkt Deployment zaobalující objekt Pod, který slouží jako proxy služba do privátní sítě k danému zařízení. Pro každé spojení je vytvořen právě jeden Pod. Každá handler definovaný v objektu Device odpovídá jednomu kontejneru běžícímu ve vytvořeném podu. Mimo deployment vyváří kontroller i objekt Service, díky které umoňuje adresovat daná zařízení pomocí DNS jména. Registrované DNS jméno zařízení, ve výchozím konfiguraci, odpovídá \verb|dop-<name_of_service>|. Vystavené porty objektem Service odpovídají portům na daném zařízení. 
+Reconcile metoda implementuje logiku pro vytváření nový spojení a udržování již existujících spojení (\textit{Connection}). Při vzniku nového spojení (vytvoření objektu \textit{Connection}) metoda vytvoří objekt Deployment zaobalující objekt Pod, který slouží jako proxy služba do privátní sítě k danému zařízení. Pro každé spojení je vytvořen právě jeden Pod. Každý handler definovaný v objektu \textit{Device} odpovídá jednomu kontejneru běžícímu ve vytvořeném Podu. Mimo Deployment vyváří kontroler i objekt Service, díky které umožňuje adresovat daná zařízení pomocí DNS jména. Registrované DNS jméno zařízení, ve výchozím konfiguraci, odpovídá \verb|dop-<name_of_service>|. Vystavené porty objektem Service odpovídají portům na daném zařízení. 
 
 Druhou implementovanou funkcionalitou je Delete. Tato metoda je volána vždy, když dojde ke smazání objektu Service.
 
-Kontroller je konfigurovatelný, díky tomuto je možné upravit jeho chování konkrétním potřebám užití. Implementace kontrolleru je součástí třídy \verb|ConnectionController|. 
+Kontroler je konfigurovatelný, díky tomu je možné upravit jeho chování konkrétním potřebám užití. Implementace kontroleru je součástí třídy \verb|ConnectionController|. 
+
+Pro snazší pochopení jsou uvedeny ukázkové implementace \textit{EdgeOperator} kontroleru. Uvedené ukázky pseudokódu jsou uvedeny ve výpisu kódů \ref{pseudo:reconcile} a \ref{pseudo:delete}
+
+\input{text/code/pseudoReconcile}
+\input{text/code/pseudoDelete}
 
 \subsubsection*{Instalace a ukázka použití operátoru}
-Zdrojový kód operátoru edge-operator je veřejně dostupný na platformě GitHub v repozitáři \verb|dvojak-cz/Bachelor-Thesis|. Teto repozitár obsahuje mimo zkdojvého kódu i definice prostředí (popsáno výše), dokumentaci k operátoru a vše ostatní spjaté s touto prací.
+Zdrojový kód operátoru \textit{EdgeOperator} je dostupný v přiloženém archivu, případně na platformě GitHub v repositáři \href{https://github.com/dvojak-cz/Bachelor-Thesis}{\texttt{dvojak-cz/Bachelor-Thesis}}. Archiv obsahuje mimo zdrojového kódu i definice prostředí (popsáno výše), dokumentaci k operátoru a vše ostatní spjaté s touto prací.
 
-Pro jednoduché nasazení a použití operátoru lze využít dokumentaci na webu\\\href{https://bt.project.dvojak.cz/}{\textit{bt.project.dvojak.cz}}. Instalace operátoru je umožněna pomocí sady konfigurovatelných manifestů, které jsou součástí každého release daného repoziáře. Potřebné kontejnery pro testování a instacaci operátoru jsou dosupné v kontejnerovém repozitáři GitHub.
+Pro jednoduché nasazení a použití operátoru lze využít dokumentaci na webu\\\href{https://bt.project.dvojak.cz/}{\textit{bt.project.dvojak.cz}}. Instalace operátoru je umožněna pomocí sady konfigurovatelných manifestů, které jsou součástí každého release daného repositáře. Potřebné kontejnery pro testování a instalaci operátoru jsou dostupné v kontejnerovém repositáři GitHub.
 
-Zmíněná dokumentace obsahuje i příklad použití samotného kontrolleru. Definice objektů jsou dosupné v repozitáři.  
+Zmíněná dokumentace obsahuje i příklad použití samotného kontroleru. Definice objektů jsou dostupné v repositáři.  

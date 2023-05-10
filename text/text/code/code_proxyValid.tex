@@ -3,8 +3,8 @@
 caption={Ukázka nastavení proxy Podu},
 label={code:proxyValid}
 ]
-# Attach to SH incide the pod
-[1]$ kubectl exec -it sample - proxy -- sh
+# Exec /bin/sh inside Pod
+[1]$ kubectl exec -it sample-proxy -- sh
 
 # Show SoCat process (pid=1)
 [2]$ ps -p 1 -o args

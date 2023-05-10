@@ -3,24 +3,24 @@
 style=mybashstyle,
 caption={Ruční nastavení síťování konteneru - docker bridge},
 label={cmd:bridge}]
-# Create container without any network
+# Create container with an empty network namespace
 [_]$ docker run --rm -it --net none --name example travelping/nettools &
 
-# Reference namespace that docker has created for us
+# Reference the namespace that docker has created
 [_]$ mkdir -p /var/run/netns
 [_]$ touch /var/run/netns/docker
 [_]$ mount -o bind /proc/`docker<~>inspect<~>-f<~>'{{.State.Pid}}'<~>example`/ns/net /var/run/netns/docker
 
-# Create veth pair
+# Create a veth pair
 [_]$ ip link add ceth0 type veth peer name veth0
 
-# Move one interface to docker net namespace 
+# Move one interface to the docker network namespace 
 [_]$ ip link set netns docker dev veth0
 
-# Create bridge
+# Create a bridge intreface
 [_]$ ip link add br0 type bridge
 
-# Connect second interface to bridge
+# Connect second interface to the bridge
 [_]$ ip link set veth0 master br0
 
 # Add IPs to interaces

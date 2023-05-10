@@ -1,0 +1,13 @@
+\begin{lstfloat}
+\begin{lstlisting}[
+caption={Implementace Delete v Edge-Operator},
+label={pseudo:delete}
+]
+func Delete(ConnectionEntity entity){
+    var name = GetProxyName(entity);
+
+    cloud.DeleteV1Deployment(name, namespace);
+    cloud.DeleteV1Service(name, namespace)
+}
+\end{lstlisting}
+\end{lstfloat}

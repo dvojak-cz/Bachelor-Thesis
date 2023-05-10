@@ -1,10 +1,10 @@
 \begin{lstfloat}
 \begin{lstlisting}[
 style=mybashstyle,
-caption={Nastavení síťových prostředků v podu pro hostNetwork=true},
+caption={Nastavení síťových prostředků v podu při využití hostNetwork},
 label={cmd:podHostNet}
 ]
-# Crete pod with ".spec.hostNetwork=true"
+# Crete Pod with ".spec.hostNetwork=true"
 [1]$ kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Pod
@@ -19,7 +19,7 @@ spec:
       args: ["/dev/random"]
 EOF
 
-# Attach to newly created pod
+# Attach to newly created Pod
 [1]$ kubectl exec -it my-pod -- bash
 
 # List network interfaces

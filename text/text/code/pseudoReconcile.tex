@@ -1,0 +1,26 @@
+\begin{lstfloat}
+\begin{lstlisting}[
+caption={Implementace Reconcile v Edge-Operator},
+label={pseudo:reconcile}
+]
+func Reconcile(ConnectionEntity entity){
+    var name = GetProxyName(entity);
+    var namespace = entity.Namespace();
+
+    if (cloud.ConnectionExists(name, namespace)){
+        var deployment = updateDeployment(name,entity);
+        var service = updateService(name,entity);
+
+        cloud.UpdateV1Deployment(deployment, namespace);
+        cloud.UpdateV1Service(service, namespace);
+    }
+    else{
+        var deployment = createDeployment(name,entity);
+        var service = createService(name,entity);
+
+        cloud.NewV1Service(deployment, namespace);
+        cloud.NewV1Deployment(deployment, namespace);
+    }
+}
+\end{lstlisting}
+\end{lstfloat}

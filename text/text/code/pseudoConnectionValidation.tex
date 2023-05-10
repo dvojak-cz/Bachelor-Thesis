@@ -1,0 +1,21 @@
+\begin{lstfloat}
+\begin{lstlisting}[
+caption={Implementace validace Conection v Edge-Operator},
+label={pseudo:connectionValidation}
+]
+func ValidateConnection(Connection connection){
+    var errors = new([]string);
+
+    errors += validateDeviceExists(connection);
+    errors += validateDeviceIsUp(connection);
+    errors += validateDeviceContainsComponents(connection);
+    errors += validateComponentsAreUp(connection);
+    errors += validateNadExits(connection);
+
+    if(cloud.operator.strictValidation){
+        return Fail(errors);
+    }
+    return Success(errors);
+}
+\end{lstlisting}
+\end{lstfloat}
